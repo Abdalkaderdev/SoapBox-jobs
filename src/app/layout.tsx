@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { SavedJobsProvider } from "@/contexts/SavedJobsContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
 
 export const metadata: Metadata = {
@@ -16,10 +17,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen bg-gray-50">
-        <SavedJobsProvider>
-          <Header />
-          <main>{children}</main>
-        </SavedJobsProvider>
+        <AuthProvider>
+          <SavedJobsProvider>
+            <Header />
+            <main>{children}</main>
+          </SavedJobsProvider>
+        </AuthProvider>
       </body>
     </html>
   );
