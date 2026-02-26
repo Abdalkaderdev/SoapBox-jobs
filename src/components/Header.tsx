@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSavedJobs } from "@/contexts/SavedJobsContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -73,11 +74,18 @@ export default function Header() {
           <div className="flex items-center">
             <Link
               href="/"
-              className="flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 rounded-lg"
+              className="flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 rounded-lg"
               aria-label="SoapBox Jobs - Go to homepage"
             >
+              <Image
+                src="/soapbox-logo-new.png"
+                alt="SoapBox"
+                width={32}
+                height={32}
+                className="w-8 h-8"
+              />
               <span className="text-2xl font-bold text-primary-600">SoapBox</span>
-              <span className="text-2xl font-light text-gray-600 ml-1">Jobs</span>
+              <span className="text-2xl font-light text-gray-500">Jobs</span>
             </Link>
           </div>
 

@@ -485,278 +485,328 @@ export default function JobsContent() {
 
   return (
     <>
-      {/* Search and filters */}
-      <div className="mb-6 space-y-4">
-        {/* Search input */}
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg
-              className="h-5 w-5 text-gray-400"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </div>
-          <input
-            type="text"
-            placeholder="Search jobs by title, description, or church name..."
-            value={searchQuery}
-            onChange={handleSearchChange}
-            className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900"
-          />
-        </div>
-
-        {/* Filter row */}
-        <div className="flex flex-wrap gap-4 items-center">
-          {/* Location filter */}
-          <div className="flex items-center gap-2">
-            <label htmlFor="location" className="text-sm font-medium text-gray-700">
-              Location:
-            </label>
-            <select
-              id="location"
-              value={selectedLocation}
-              onChange={handleLocationChange}
-              className="block w-48 px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900"
-            >
-              <option value="">All Locations</option>
-              {locations.map((location) => (
-                <option key={location} value={location}>
-                  {location}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Sort dropdown */}
-          <div className="flex items-center gap-2">
-            <label htmlFor="sort" className="text-sm font-medium text-gray-700">
-              Sort:
-            </label>
-            <select
-              id="sort"
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className="block w-44 px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900"
-            >
-              {SORT_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {hasActiveFilters && (
-            <>
-              <button
-                onClick={clearAllFilters}
-                className="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
+      {/* Search and filters card */}
+      <div className="mb-6 sm:mb-8 bg-white rounded-2xl shadow-soft border border-gray-100 overflow-hidden">
+        {/* Search header section */}
+        <div className="bg-gradient-to-r from-gray-50 to-white p-4 sm:p-6 border-b border-gray-100">
+          {/* Search input */}
+          <div className="relative group">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <svg
+                className="h-5 w-5 text-gray-400 group-focus-within:text-primary-500 transition-colors"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
               >
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-                Clear all filters
-              </button>
+                <path
+                  fillRule="evenodd"
+                  d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Search jobs by title, description, or church name..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+              className="block w-full pl-11 pr-4 py-3.5 border-2 border-gray-200 rounded-xl bg-white placeholder-gray-400 focus:outline-none focus:ring-0 focus:border-primary-500 text-gray-900 text-base transition-colors shadow-sm"
+            />
+            {searchQuery && (
               <button
-                onClick={handleOpenSaveModal}
-                className="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1 ml-2"
+                onClick={() => setSearchQuery("")}
+                className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600"
               >
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                  />
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
-                Save this search
               </button>
-            </>
-          )}
-        </div>
+            )}
+          </div>
 
-        {/* Employment type filter */}
-        <div>
-          <label className="text-sm font-medium text-gray-700 mb-2 block">
-            Employment Type:
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {EMPLOYMENT_TYPES.map((type) => {
-              const isSelected = selectedEmploymentTypes.includes(type);
-              return (
-                <button
-                  key={type}
-                  onClick={() => handleEmploymentTypeToggle(type)}
-                  className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                    isSelected
-                      ? "bg-primary-600 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
+          {/* Filter row - dropdowns and actions */}
+          <div className="mt-4 flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-stretch sm:items-center">
+            {/* Location filter */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <label htmlFor="location" className="text-sm font-semibold text-gray-600 whitespace-nowrap">
+                Location
+              </label>
+              <div className="relative">
+                <select
+                  id="location"
+                  value={selectedLocation}
+                  onChange={handleLocationChange}
+                  className="block w-full sm:w-52 pl-4 pr-10 py-2.5 border-2 border-gray-200 rounded-xl bg-white focus:outline-none focus:border-primary-500 text-gray-900 text-sm font-medium appearance-none cursor-pointer transition-colors"
                 >
-                  {type}
+                  <option value="">All Locations</option>
+                  {locations.map((location) => (
+                    <option key={location} value={location}>
+                      {location}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <svg className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* Sort dropdown */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <label htmlFor="sort" className="text-sm font-semibold text-gray-600 whitespace-nowrap">
+                Sort by
+              </label>
+              <div className="relative">
+                <select
+                  id="sort"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as SortOption)}
+                  className="block w-full sm:w-48 pl-4 pr-10 py-2.5 border-2 border-gray-200 rounded-xl bg-white focus:outline-none focus:border-primary-500 text-gray-900 text-sm font-medium appearance-none cursor-pointer transition-colors"
+                >
+                  {SORT_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <svg className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* Spacer */}
+            <div className="hidden sm:block flex-1" />
+
+            {/* Action buttons */}
+            {hasActiveFilters && (
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3 pt-2 sm:pt-0">
+                <button
+                  onClick={clearAllFilters}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Clear filters
                 </button>
-              );
-            })}
+                <button
+                  onClick={handleOpenSaveModal}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors shadow-sm"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                  </svg>
+                  <span className="hidden sm:inline">Save search</span>
+                  <span className="sm:hidden">Save</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Work arrangement filter */}
-        <div>
-          <label className="text-sm font-medium text-gray-700 mb-2 block">
-            Work Arrangement:
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {WORK_ARRANGEMENTS.map((arrangement) => {
-              const isSelected = selectedWorkArrangements.includes(arrangement);
-              return (
-                <button
-                  key={arrangement}
-                  onClick={() => handleWorkArrangementToggle(arrangement)}
-                  className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                    isSelected
-                      ? "bg-primary-600 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  {arrangement}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Salary range filter */}
-        <div>
-          <label className="text-sm font-medium text-gray-700 mb-2 block">
-            Salary Range (Annual):
-          </label>
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-gray-500">$</span>
-              <input
-                type="number"
-                placeholder="Min"
-                value={salaryMin}
-                onChange={(e) => setSalaryMin(e.target.value)}
-                className="w-28 px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900"
-              />
-            </div>
-            <span className="text-gray-500">to</span>
-            <div className="flex items-center gap-2">
-              <span className="text-gray-500">$</span>
-              <input
-                type="number"
-                placeholder="Max"
-                value={salaryMax}
-                onChange={(e) => setSalaryMax(e.target.value)}
-                className="w-28 px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900"
-              />
-            </div>
-            <label className="flex items-center gap-2 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                checked={showNoSalary}
-                onChange={(e) => setShowNoSalary(e.target.checked)}
-                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-              />
-              Show jobs without salary
+        {/* Filter chips section */}
+        <div className="p-4 sm:p-6 space-y-5">
+          {/* Employment type filter */}
+          <div>
+            <label className="text-sm font-semibold text-gray-700 mb-3 block flex items-center gap-2">
+              <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              Employment Type
             </label>
-          </div>
-        </div>
-
-        {/* Category filter */}
-        <div>
-          <label className="text-sm font-medium text-gray-700 mb-2 block">
-            Categories:
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {JOB_CATEGORIES.map((category) => {
-              const isSelected = selectedCategories.includes(category);
-              const count = categoryJobCounts[category];
-              return (
-                <button
-                  key={category}
-                  onClick={() => handleCategoryToggle(category)}
-                  className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                    isSelected
-                      ? "bg-primary-600 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  {category}
-                  <span
-                    className={`ml-1.5 ${
-                      isSelected ? "text-primary-200" : "text-gray-500"
+            <div className="flex flex-wrap gap-2">
+              {EMPLOYMENT_TYPES.map((type) => {
+                const isSelected = selectedEmploymentTypes.includes(type);
+                return (
+                  <button
+                    key={type}
+                    onClick={() => handleEmploymentTypeToggle(type)}
+                    className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border-2 ${
+                      isSelected
+                        ? "bg-primary-600 text-white border-primary-600 shadow-sm"
+                        : "bg-white text-gray-700 border-gray-200 hover:border-primary-300 hover:bg-primary-50"
                     }`}
                   >
-                    ({count})
-                  </span>
-                </button>
-              );
-            })}
+                    {isSelected && (
+                      <svg className="h-3.5 w-3.5 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                    {type}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Work arrangement filter */}
+          <div>
+            <label className="text-sm font-semibold text-gray-700 mb-3 block flex items-center gap-2">
+              <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Work Arrangement
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {WORK_ARRANGEMENTS.map((arrangement) => {
+                const isSelected = selectedWorkArrangements.includes(arrangement);
+                return (
+                  <button
+                    key={arrangement}
+                    onClick={() => handleWorkArrangementToggle(arrangement)}
+                    className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border-2 ${
+                      isSelected
+                        ? "bg-primary-600 text-white border-primary-600 shadow-sm"
+                        : "bg-white text-gray-700 border-gray-200 hover:border-primary-300 hover:bg-primary-50"
+                    }`}
+                  >
+                    {isSelected && (
+                      <svg className="h-3.5 w-3.5 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                    {arrangement}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Salary range filter */}
+          <div>
+            <label className="text-sm font-semibold text-gray-700 mb-3 block flex items-center gap-2">
+              <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Salary Range (Annual)
+            </label>
+            <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3">
+              <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2 border-2 border-gray-200 focus-within:border-primary-500 transition-colors">
+                <span className="text-gray-400 font-medium">$</span>
+                <input
+                  type="number"
+                  placeholder="Min"
+                  value={salaryMin}
+                  onChange={(e) => setSalaryMin(e.target.value)}
+                  className="w-full sm:w-24 bg-transparent focus:outline-none text-gray-900 placeholder-gray-400"
+                />
+              </div>
+              <span className="text-gray-400 font-medium hidden sm:inline">to</span>
+              <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2 border-2 border-gray-200 focus-within:border-primary-500 transition-colors">
+                <span className="text-gray-400 font-medium">$</span>
+                <input
+                  type="number"
+                  placeholder="Max"
+                  value={salaryMax}
+                  onChange={(e) => setSalaryMax(e.target.value)}
+                  className="w-full sm:w-24 bg-transparent focus:outline-none text-gray-900 placeholder-gray-400"
+                />
+              </div>
+              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none bg-gray-50 rounded-xl px-3 py-2 border-2 border-gray-200 hover:border-gray-300 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={showNoSalary}
+                  onChange={(e) => setShowNoSalary(e.target.checked)}
+                  className="rounded border-gray-300 text-primary-600 focus:ring-primary-500 focus:ring-offset-0"
+                />
+                <span>Include unlisted salaries</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Category filter */}
+          <div>
+            <label className="text-sm font-semibold text-gray-700 mb-3 block flex items-center gap-2">
+              <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+              </svg>
+              Categories
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {JOB_CATEGORIES.map((category) => {
+                const isSelected = selectedCategories.includes(category);
+                const count = categoryJobCounts[category];
+                return (
+                  <button
+                    key={category}
+                    onClick={() => handleCategoryToggle(category)}
+                    className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border-2 ${
+                      isSelected
+                        ? "bg-primary-600 text-white border-primary-600 shadow-sm"
+                        : "bg-white text-gray-700 border-gray-200 hover:border-primary-300 hover:bg-primary-50"
+                    }`}
+                  >
+                    {isSelected && (
+                      <svg className="h-3.5 w-3.5 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                    {category}
+                    <span
+                      className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${
+                        isSelected ? "bg-primary-500 text-primary-100" : "bg-gray-100 text-gray-500"
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Results count */}
-      <div className="mb-4">
-        <p className="text-sm text-gray-600">
+      {/* Results count with separator */}
+      <div className="mb-6 flex items-center gap-4">
+        <p className="text-sm font-medium text-gray-600 whitespace-nowrap">
           {totalJobs > 0 ? (
             <>
-              Showing {startIndex + 1}-{endIndex} of {totalJobs} jobs
+              Showing <span className="text-gray-900 font-semibold">{startIndex + 1}-{endIndex}</span> of <span className="text-gray-900 font-semibold">{totalJobs}</span> jobs
             </>
           ) : (
-            <>Showing 0 of {mockJobs.length} jobs</>
+            <>Showing <span className="text-gray-900 font-semibold">0</span> of <span className="text-gray-900 font-semibold">{mockJobs.length}</span> jobs</>
           )}
         </p>
+        <div className="flex-1 h-px bg-gradient-to-r from-gray-200 to-transparent" />
       </div>
 
       {/* Job listings grid */}
       {paginatedJobs.length > 0 ? (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {paginatedJobs.map((job) => (
-              <JobCard key={job.id} job={job} />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {paginatedJobs.map((job, index) => (
+              <div
+                key={job.id}
+                className="animate-fade-in"
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                <JobCard job={job} />
+              </div>
             ))}
           </div>
 
           {/* Pagination */}
           {totalPages > 1 && (
             <nav
-              className="mt-8 flex items-center justify-center"
+              className="mt-8 sm:mt-10 flex items-center justify-center"
               aria-label="Pagination"
             >
-              <div className="flex items-center gap-1">
+              <div className="inline-flex items-center gap-1 bg-white rounded-xl shadow-soft border border-gray-100 p-1.5">
                 {/* Previous button */}
                 <button
                   onClick={handlePreviousPage}
                   disabled={currentPage === 1}
-                  className={`relative inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg ${
+                  className={`relative inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                     currentPage === 1
                       ? "text-gray-300 cursor-not-allowed"
-                      : "text-gray-700 hover:bg-gray-100"
+                      : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                   }`}
                   aria-label="Previous page"
                 >
@@ -773,7 +823,7 @@ export default function JobsContent() {
                       clipRule="evenodd"
                     />
                   </svg>
-                  <span className="ml-1">Previous</span>
+                  <span className="ml-1 hidden sm:inline">Previous</span>
                 </button>
 
                 {/* Page numbers */}
@@ -782,7 +832,7 @@ export default function JobsContent() {
                     pageNum === "ellipsis" ? (
                       <span
                         key={`ellipsis-${index}`}
-                        className="px-3 py-2 text-sm text-gray-500"
+                        className="px-3 py-2 text-sm text-gray-400"
                       >
                         ...
                       </span>
@@ -790,10 +840,10 @@ export default function JobsContent() {
                       <button
                         key={pageNum}
                         onClick={() => handlePageChange(pageNum)}
-                        className={`relative inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg ${
+                        className={`relative inline-flex items-center justify-center min-w-[40px] px-3 py-2 text-sm font-medium rounded-lg transition-all ${
                           currentPage === pageNum
-                            ? "bg-primary-600 text-white"
-                            : "text-gray-700 hover:bg-gray-100"
+                            ? "bg-primary-600 text-white shadow-sm"
+                            : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                         }`}
                         aria-current={currentPage === pageNum ? "page" : undefined}
                       >
@@ -804,22 +854,22 @@ export default function JobsContent() {
                 </div>
 
                 {/* Mobile page indicator */}
-                <span className="sm:hidden px-3 py-2 text-sm text-gray-700">
-                  Page {currentPage} of {totalPages}
+                <span className="sm:hidden px-4 py-2 text-sm font-medium text-gray-700">
+                  {currentPage} / {totalPages}
                 </span>
 
                 {/* Next button */}
                 <button
                   onClick={handleNextPage}
                   disabled={currentPage === totalPages}
-                  className={`relative inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg ${
+                  className={`relative inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                     currentPage === totalPages
                       ? "text-gray-300 cursor-not-allowed"
-                      : "text-gray-700 hover:bg-gray-100"
+                      : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                   }`}
                   aria-label="Next page"
                 >
-                  <span className="mr-1">Next</span>
+                  <span className="mr-1 hidden sm:inline">Next</span>
                   <svg
                     className="h-5 w-5"
                     xmlns="http://www.w3.org/2000/svg"
@@ -839,29 +889,34 @@ export default function JobsContent() {
           )}
         </>
       ) : (
-        <div className="text-center py-12 bg-white rounded-lg shadow-sm border border-gray-200">
-          <svg
-            className="mx-auto h-12 w-12 text-gray-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-          <h3 className="mt-4 text-lg font-medium text-gray-900">No jobs found</h3>
-          <p className="mt-2 text-gray-500">
-            Try adjusting your search terms or filters.
+        <div className="text-center py-12 sm:py-16 bg-white rounded-2xl shadow-soft border border-gray-100">
+          <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
+            <svg
+              className="h-8 w-8 text-gray-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900">No jobs found</h3>
+          <p className="mt-2 text-gray-500 max-w-sm mx-auto">
+            We could not find any jobs matching your criteria. Try adjusting your filters or search terms.
           </p>
           <button
             onClick={clearAllFilters}
-            className="mt-4 text-primary-600 hover:text-primary-700 font-medium"
+            className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white rounded-xl hover:bg-primary-700 font-medium transition-colors shadow-sm"
           >
-            Clear all filters
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Reset all filters
           </button>
         </div>
       )}
@@ -872,17 +927,17 @@ export default function JobsContent() {
           <div className="flex min-h-full items-center justify-center p-4">
             {/* Backdrop */}
             <div
-              className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+              className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"
               onClick={() => setShowSaveModal(false)}
             />
 
             {/* Modal */}
-            <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-slide-up">
               {saveSuccess ? (
-                <div className="text-center py-4">
-                  <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                <div className="text-center py-10 px-6">
+                  <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-5">
                     <svg
-                      className="w-6 h-6 text-green-600"
+                      className="w-8 h-8 text-green-600"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -895,46 +950,48 @@ export default function JobsContent() {
                       />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900">Alert Saved!</h3>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <h3 className="text-xl font-bold text-gray-900">Alert Saved!</h3>
+                  <p className="text-gray-600 mt-2">
                     You&apos;ll be notified when new jobs match your search.
                   </p>
                 </div>
               ) : (
                 <>
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-semibold text-gray-900">
-                      Save this search
-                    </h2>
-                    <button
-                      onClick={() => setShowSaveModal(false)}
-                      className="text-gray-400 hover:text-gray-600"
-                    >
-                      <svg
-                        className="h-6 w-6"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
+                  {/* Modal header */}
+                  <div className="bg-gradient-to-r from-primary-50 to-white px-6 py-5 border-b border-gray-100">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center">
+                          <svg className="w-5 h-5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                          </svg>
+                        </div>
+                        <div>
+                          <h2 className="text-lg font-bold text-gray-900">
+                            Save this search
+                          </h2>
+                          <p className="text-sm text-gray-500">
+                            Get notified when new jobs match
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setShowSaveModal(false)}
+                        className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg p-1.5 transition-colors"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
 
-                  <p className="text-sm text-gray-600 mb-4">
-                    Get notified when new jobs match your current filters.
-                  </p>
-
-                  <div className="space-y-4">
+                  {/* Modal body */}
+                  <div className="p-6 space-y-5">
                     <div>
                       <label
                         htmlFor="alertName"
-                        className="block text-sm font-medium text-gray-700 mb-1"
+                        className="block text-sm font-semibold text-gray-700 mb-2"
                       >
                         Alert Name
                       </label>
@@ -944,51 +1001,61 @@ export default function JobsContent() {
                         value={alertName}
                         onChange={(e) => setAlertName(e.target.value)}
                         placeholder="e.g., Worship Leader jobs in Austin"
-                        className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                        className="block w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary-500 text-gray-900 placeholder-gray-400 transition-colors"
                       />
                     </div>
 
                     <div>
                       <label
                         htmlFor="alertFrequency"
-                        className="block text-sm font-medium text-gray-700 mb-1"
+                        className="block text-sm font-semibold text-gray-700 mb-2"
                       >
                         Notification Frequency
                       </label>
-                      <select
-                        id="alertFrequency"
-                        value={alertFrequency}
-                        onChange={(e) =>
-                          setAlertFrequency(e.target.value as JobAlert["frequency"])
-                        }
-                        className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900"
-                      >
-                        <option value="immediate">Immediately</option>
-                        <option value="daily">Daily digest</option>
-                        <option value="weekly">Weekly digest</option>
-                      </select>
+                      <div className="relative">
+                        <select
+                          id="alertFrequency"
+                          value={alertFrequency}
+                          onChange={(e) =>
+                            setAlertFrequency(e.target.value as JobAlert["frequency"])
+                          }
+                          className="block w-full px-4 py-3 pr-10 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary-500 text-gray-900 appearance-none cursor-pointer transition-colors"
+                        >
+                          <option value="immediate">Immediately</option>
+                          <option value="daily">Daily digest</option>
+                          <option value="weekly">Weekly digest</option>
+                        </select>
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                          <svg className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Current filters summary */}
-                    <div className="bg-gray-50 rounded-lg p-3">
-                      <p className="text-sm font-medium text-gray-700 mb-2">
-                        Current filters:
+                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                      <p className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                        <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                        </svg>
+                        Active filters
                       </p>
-                      <div className="flex flex-wrap gap-1">
+                      <div className="flex flex-wrap gap-2">
                         {debouncedSearch && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-primary-100 text-primary-700">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-primary-100 text-primary-700">
                             &quot;{debouncedSearch}&quot;
                           </span>
                         )}
                         {selectedLocation && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-primary-100 text-primary-700">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-primary-100 text-primary-700">
                             {selectedLocation}
                           </span>
                         )}
                         {selectedCategories.map((cat) => (
                           <span
                             key={cat}
-                            className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-primary-100 text-primary-700"
+                            className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-primary-100 text-primary-700"
                           >
                             {cat}
                           </span>
@@ -996,7 +1063,7 @@ export default function JobsContent() {
                         {selectedEmploymentTypes.map((type) => (
                           <span
                             key={type}
-                            className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-primary-100 text-primary-700"
+                            className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-primary-100 text-primary-700"
                           >
                             {type}
                           </span>
@@ -1004,26 +1071,30 @@ export default function JobsContent() {
                         {selectedWorkArrangements.map((arr) => (
                           <span
                             key={arr}
-                            className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-primary-100 text-primary-700"
+                            className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-primary-100 text-primary-700"
                           >
                             {arr}
                           </span>
                         ))}
+                        {!debouncedSearch && !selectedLocation && selectedCategories.length === 0 && selectedEmploymentTypes.length === 0 && selectedWorkArrangements.length === 0 && (
+                          <span className="text-sm text-gray-500">All jobs</span>
+                        )}
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-6 flex gap-3">
+                  {/* Modal footer */}
+                  <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex gap-3">
                     <button
                       onClick={() => setShowSaveModal(false)}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium"
+                      className="flex-1 px-4 py-2.5 border-2 border-gray-200 rounded-xl text-gray-700 hover:bg-gray-100 font-medium transition-colors"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleSaveAlert}
                       disabled={!alertName.trim()}
-                      className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 px-4 py-2.5 bg-primary-600 text-white rounded-xl hover:bg-primary-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
                     >
                       Save Alert
                     </button>

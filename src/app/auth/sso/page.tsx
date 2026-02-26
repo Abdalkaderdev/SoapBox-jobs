@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 
 function SSOCallbackContent() {
@@ -65,12 +66,23 @@ function SSOCallbackContent() {
   }, [searchParams, loginWithSSO, router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-primary-50">
       <div className="max-w-md w-full mx-4">
-        <div className="bg-white rounded-lg shadow-lg p-8 text-center">
+        <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+          {/* Logo */}
+          <div className="mx-auto w-16 h-16 flex items-center justify-center mb-4">
+            <Image
+              src="/soapbox-logo-new.png"
+              alt="SoapBox"
+              width={64}
+              height={64}
+              className="w-16 h-16"
+            />
+          </div>
+
           {status === "loading" && (
             <>
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
               <h2 className="text-xl font-semibold text-gray-900 mb-2">
                 Signing you in...
               </h2>
@@ -98,7 +110,7 @@ function SSOCallbackContent() {
                 </svg>
               </div>
               <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                Welcome!
+                Welcome to <span className="text-primary-600">SoapBox</span> <span className="text-gray-500 font-light">Jobs</span>!
               </h2>
               <p className="text-gray-600">Redirecting you to the dashboard...</p>
             </>
@@ -128,13 +140,13 @@ function SSOCallbackContent() {
               <div className="space-y-3">
                 <a
                   href="https://soapboxsuperapp.com"
-                  className="block w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="block w-full px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors font-medium"
                 >
                   Go to SoapBox
                 </a>
                 <button
                   onClick={() => router.push("/auth/signin")}
-                  className="block w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="block w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
                 >
                   Sign in with email
                 </button>
@@ -151,10 +163,10 @@ export default function SSOCallbackPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="min-h-screen flex items-center justify-center bg-primary-50">
           <div className="max-w-md w-full mx-4">
-            <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
               <h2 className="text-xl font-semibold text-gray-900 mb-2">
                 Loading...
               </h2>

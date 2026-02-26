@@ -5,8 +5,13 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
 
 export const metadata: Metadata = {
-  title: "SoapBox Jobs - Faith-Based Employment",
+  title: "SoapBox Jobs - Faith-Based Employment Platform",
   description: "Connect with churches and faith-based organizations for meaningful ministry opportunities",
+  icons: {
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
+  },
 };
 
 export default function RootLayout({

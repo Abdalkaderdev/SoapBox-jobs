@@ -76,29 +76,33 @@ export default function JobCard({ job }: JobCardProps) {
   };
 
   return (
-    <article aria-labelledby={`job-title-${job.id}`}>
+    <article aria-labelledby={`job-title-${job.id}`} className="h-full">
       <Link
         href={`/jobs/${job.id}`}
         onClick={handleCardClick}
-        className="block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+        className="block h-full rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
         aria-label={`View details for ${job.title} at ${job.church.name}`}
       >
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-primary-200 transition-all duration-200 cursor-pointer h-full flex flex-col">
+        <div className="group bg-white rounded-2xl shadow-card border border-gray-100 p-5 sm:p-6 hover:shadow-card-hover hover:border-primary-200 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer h-full flex flex-col">
           <div className="flex-1">
             <div className="flex items-start justify-between mb-3">
-              <div className="flex-1 pr-2">
+              <div className="flex-1 pr-3">
                 <h3
                   id={`job-title-${job.id}`}
-                  className="text-lg font-semibold text-gray-900 hover:text-primary-600 line-clamp-2"
+                  className="text-lg font-bold text-gray-900 group-hover:text-primary-600 line-clamp-2 transition-colors"
                 >
                   {job.title}
                 </h3>
-                <p className="text-primary-600 font-medium mt-1">{job.church.name}</p>
+                <p className="text-primary-600 font-semibold mt-1.5 text-sm">{job.church.name}</p>
               </div>
               <button
                 onClick={handleSaveClick}
                 onKeyDown={handleSaveKeyDown}
-                className="flex-shrink-0 p-2 rounded-full hover:bg-gray-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+                className={`flex-shrink-0 p-2.5 rounded-xl transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 ${
+                  saved
+                    ? "bg-red-50 hover:bg-red-100"
+                    : "bg-gray-50 hover:bg-gray-100"
+                }`}
                 aria-label={saved ? `Remove ${job.title} from saved jobs` : `Save ${job.title} to your saved jobs`}
                 aria-pressed={saved}
               >
@@ -113,7 +117,7 @@ export default function JobCard({ job }: JobCardProps) {
                   </svg>
                 ) : (
                   <svg
-                    className="h-5 w-5 text-gray-400 hover:text-red-500"
+                    className="h-5 w-5 text-gray-400 group-hover:text-primary-400 transition-colors"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -130,33 +134,36 @@ export default function JobCard({ job }: JobCardProps) {
               </button>
             </div>
 
-          <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600 mb-4">
-            <span className="flex items-center gap-1">
-              <span>📍</span>
-              {job.location}
-            </span>
-            <span className="text-gray-300">•</span>
-            <span className="flex items-center gap-1">
-              {getWorkArrangementIcon(job.workArrangement)}
-              {job.workArrangement}
-            </span>
-          </div>
+            <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500 mb-4">
+              <span className="inline-flex items-center gap-1.5">
+                <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span className="font-medium">{job.location}</span>
+              </span>
+              <span className="text-gray-300">|</span>
+              <span className="inline-flex items-center gap-1">
+                <span className="text-base">{getWorkArrangementIcon(job.workArrangement)}</span>
+                <span className="font-medium">{job.workArrangement}</span>
+              </span>
+            </div>
 
-          <div className="flex flex-wrap gap-2 mb-4">
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
-              {job.category}
-            </span>
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-              {job.employmentType}
-            </span>
+            <div className="flex flex-wrap gap-2 mb-4">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-primary-50 text-primary-700 border border-primary-100">
+                {job.category}
+              </span>
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-50 text-gray-600 border border-gray-100">
+                {job.employmentType}
+              </span>
+            </div>
           </div>
-        </div>
 
           <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
-            <span className="text-sm font-medium text-gray-900">
+            <span className="text-sm font-bold text-gray-900">
               {formatSalary(job.salary)}
             </span>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs font-medium text-gray-400 bg-gray-50 px-2 py-1 rounded-md">
               <time dateTime={job.postedAt}>{formatDate(job.postedAt)}</time>
             </span>
           </div>
