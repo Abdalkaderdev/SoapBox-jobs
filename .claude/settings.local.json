@@ -17,7 +17,9 @@
       "Bash(git checkout:*)",
       "Bash(npx tsc:*)",
       "Bash(npm run lint)",
-      "Bash(npx next lint:*)"
+      "Bash(npx next lint:*)",
+      "Bash(git merge:*)",
+      "Bash(git stash:*)"
     ]
   }
 }

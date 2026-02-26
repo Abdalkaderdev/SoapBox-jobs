@@ -112,6 +112,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
+    // First, try to authenticate against real SoapBox API
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.user) {
+        const authUser: AuthUser = {
+          id: data.user.id,
+          email: data.user.email,
+          name: data.user.name,
+          role: data.user.role,
+          churchId: data.user.churchId,
+          profilePhoto: data.user.profilePhoto,
+          username: data.user.username,
+          firstName: data.user.firstName,
+          lastName: data.user.lastName,
+        };
+        setUser(authUser);
+        setStoredAuth(authUser);
+        return { success: true };
+      }
+
+      // If SoapBox API returned an error (not a network error), use that error
+      if (response.status === 401) {
+        // Fall through to try mock users
+      } else if (!data.success) {
+        return { success: false, error: data.error || "Login failed" };
+      }
+    } catch (error) {
+      // API unavailable, fall through to mock users
+      console.log("SoapBox API unavailable, trying mock users");
+    }
+
+    // Fall back to mock users for demo accounts
     const validUser = validateCredentials(email, password);
     if (validUser) {
       const authUser: AuthUser = {
@@ -127,6 +166,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setStoredAuth(authUser);
       return { success: true };
     }
+
     return { success: false, error: "Invalid email or password" };
   }, []);
 
