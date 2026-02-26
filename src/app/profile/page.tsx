@@ -109,7 +109,7 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8" role="status" aria-label="Loading profile">
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-1/4 mb-8"></div>
           <div className="space-y-4">
@@ -133,7 +133,7 @@ export default function ProfilePage() {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         {/* Profile photo placeholder */}
         <div className="flex items-center gap-4 mb-8 pb-8 border-b border-gray-200">
-          <div className="w-20 h-20 bg-primary-100 rounded-full flex items-center justify-center">
+          <div className="w-20 h-20 bg-primary-100 rounded-full flex items-center justify-center" aria-hidden="true">
             <span className="text-3xl font-bold text-primary-600">
               {user?.name?.charAt(0) || "U"}
             </span>
@@ -147,9 +147,13 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6" noValidate>
           {saveMessage && (
-            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+            <div
+              role="status"
+              aria-live="polite"
+              className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg"
+            >
               {saveMessage}
             </div>
           )}
@@ -163,7 +167,7 @@ export default function ProfilePage() {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
             />
           </div>
 
@@ -176,16 +180,18 @@ export default function ProfilePage() {
               type="email"
               value={email}
               disabled
+              aria-disabled="true"
+              aria-describedby="email-hint"
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-gray-50 text-gray-500 cursor-not-allowed"
             />
-            <p className="mt-1 text-xs text-gray-500">Email cannot be changed</p>
+            <p id="email-hint" className="mt-1 text-xs text-gray-500">Email cannot be changed</p>
           </div>
 
           <div>
             <label htmlFor="ministryStatement" className="block text-sm font-medium text-gray-700">
               Ministry Statement
             </label>
-            <p className="text-sm text-gray-500 mb-2">
+            <p id="ministryStatement-hint" className="text-sm text-gray-500 mb-2">
               Share your calling and passion for ministry (max 2000 characters)
             </p>
             <textarea
@@ -193,10 +199,11 @@ export default function ProfilePage() {
               value={ministryStatement}
               onChange={(e) => setMinistryStatement(e.target.value.slice(0, 2000))}
               rows={6}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+              aria-describedby="ministryStatement-hint ministryStatement-count"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
               placeholder="Tell potential employers about your faith journey and calling to ministry..."
             />
-            <p className="mt-1 text-xs text-gray-500 text-right">
+            <p id="ministryStatement-count" className="mt-1 text-xs text-gray-500 text-right" aria-live="polite">
               {ministryStatement.length}/2000 characters
             </p>
           </div>
@@ -205,7 +212,8 @@ export default function ProfilePage() {
             <button
               type="submit"
               disabled={isSaving}
-              className="w-full sm:w-auto px-6 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-disabled={isSaving}
+              className="w-full sm:w-auto px-6 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSaving ? "Saving..." : "Save Changes"}
             </button>
@@ -220,56 +228,65 @@ export default function ProfilePage() {
         </h2>
 
         {notificationSaveMessage && (
-          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6">
+          <div
+            role="status"
+            aria-live="polite"
+            className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6"
+          >
             {notificationSaveMessage}
           </div>
         )}
 
         <div className="space-y-6">
           {/* Email notification checkboxes */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium text-gray-700">
+          <fieldset>
+            <legend className="text-sm font-medium text-gray-700 mb-4">
               Email Notifications
-            </h3>
+            </legend>
 
             <div className="space-y-3">
-              <label className="flex items-center gap-3 cursor-pointer">
+              <div className="flex items-center gap-3">
                 <input
+                  id="applicationStatusChange"
                   type="checkbox"
                   checked={notificationPrefs?.applicationStatusChange ?? true}
                   onChange={() =>
                     handleNotificationPrefsChange("applicationStatusChange")
                   }
-                  className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                  className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
                 />
-                <span className="text-sm text-gray-700">
+                <label htmlFor="applicationStatusChange" className="text-sm text-gray-700 cursor-pointer">
                   Email on application status change
-                </span>
-              </label>
+                </label>
+              </div>
 
-              <label className="flex items-center gap-3 cursor-pointer">
+              <div className="flex items-center gap-3">
                 <input
+                  id="newMessage"
                   type="checkbox"
                   checked={notificationPrefs?.newMessage ?? true}
                   onChange={() => handleNotificationPrefsChange("newMessage")}
-                  className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                  className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
                 />
-                <span className="text-sm text-gray-700">
+                <label htmlFor="newMessage" className="text-sm text-gray-700 cursor-pointer">
                   Email on new message
-                </span>
-              </label>
+                </label>
+              </div>
 
-              <label className="flex items-center gap-3 cursor-pointer">
+              <div className="flex items-center gap-3">
                 <input
+                  id="jobAlerts"
                   type="checkbox"
                   checked={notificationPrefs?.jobAlerts ?? true}
                   onChange={() => handleNotificationPrefsChange("jobAlerts")}
-                  className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                  className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
                 />
-                <span className="text-sm text-gray-700">Job alert emails</span>
-              </label>
+                <label htmlFor="jobAlerts" className="text-sm text-gray-700 cursor-pointer">
+                  Job alert emails
+                </label>
+              </div>
             </div>
-          </div>
+          </fieldset>
 
           {/* Frequency dropdown */}
           <div>
@@ -283,14 +300,15 @@ export default function ProfilePage() {
               id="frequency"
               value={notificationPrefs?.frequency ?? "immediate"}
               onChange={handleFrequencyChange}
-              className="block w-full sm:w-64 px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
+              aria-describedby="frequency-hint"
+              className="block w-full sm:w-64 px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
             >
               <option value="immediate">Immediate</option>
               <option value="daily">Daily digest</option>
               <option value="weekly">Weekly digest</option>
               <option value="never">Never</option>
             </select>
-            <p className="mt-1 text-xs text-gray-500">
+            <p id="frequency-hint" className="mt-1 text-xs text-gray-500">
               Choose how often you want to receive email notifications
             </p>
           </div>
@@ -301,7 +319,8 @@ export default function ProfilePage() {
               type="button"
               onClick={handleSaveNotificationPrefs}
               disabled={isSavingNotifications}
-              className="w-full sm:w-auto px-6 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-disabled={isSavingNotifications}
+              className="w-full sm:w-auto px-6 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSavingNotifications
                 ? "Saving..."

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Job } from "@/types/job";
 import { createApplication } from "@/lib/applications";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,6 +23,63 @@ export default function ApplicationModal({
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  const modalRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previousActiveElement = useRef<HTMLElement | null>(null);
+
+  // Focus trap and keyboard handling for modal
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (!isOpen) return;
+
+    if (e.key === "Escape") {
+      onClose();
+      return;
+    }
+
+    // Focus trap
+    if (e.key === "Tab" && modalRef.current) {
+      const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (e.shiftKey && document.activeElement === firstElement) {
+        e.preventDefault();
+        lastElement?.focus();
+      } else if (!e.shiftKey && document.activeElement === lastElement) {
+        e.preventDefault();
+        firstElement?.focus();
+      }
+    }
+  }, [isOpen, onClose]);
+
+  useEffect(() => {
+    if (isOpen) {
+      // Store the previously focused element
+      previousActiveElement.current = document.activeElement as HTMLElement;
+
+      // Focus the close button when modal opens
+      setTimeout(() => closeButtonRef.current?.focus(), 0);
+
+      // Prevent body scroll
+      document.body.style.overflow = "hidden";
+
+      // Add keyboard listener
+      document.addEventListener("keydown", handleKeyDown);
+    }
+
+    return () => {
+      document.body.style.overflow = "unset";
+      document.removeEventListener("keydown", handleKeyDown);
+
+      // Restore focus to previously focused element
+      if (!isOpen && previousActiveElement.current) {
+        previousActiveElement.current.focus();
+      }
+    };
+  }, [isOpen, handleKeyDown]);
 
   if (!isOpen) return null;
 
@@ -81,23 +138,34 @@ export default function ApplicationModal({
     <div
       className="fixed inset-0 z-50 overflow-y-auto bg-black/50 flex items-center justify-center p-4"
       onClick={handleBackdropClick}
+      role="presentation"
     >
-      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="application-modal-title"
+        aria-describedby="application-modal-description"
+        className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+      >
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">Apply for Position</h2>
-              <p className="text-sm text-gray-500 mt-1">
+              <h2 id="application-modal-title" className="text-xl font-semibold text-gray-900">
+                Apply for Position
+              </h2>
+              <p id="application-modal-description" className="text-sm text-gray-500 mt-1">
                 {job.title} at {job.church.name}
               </p>
             </div>
             <button
+              ref={closeButtonRef}
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-500 p-2"
-              aria-label="Close"
+              className="text-gray-400 hover:text-gray-500 p-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+              aria-label="Close application modal"
             >
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -110,9 +178,14 @@ export default function ApplicationModal({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-6 space-y-6" noValidate>
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            <div
+              id="application-error"
+              role="alert"
+              aria-live="polite"
+              className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg"
+            >
               {error}
             </div>
           )}
@@ -121,7 +194,7 @@ export default function ApplicationModal({
           <div className="bg-gray-50 rounded-lg p-4">
             <h3 className="text-sm font-medium text-gray-700 mb-2">Applying as:</h3>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+              <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center" aria-hidden="true">
                 <span className="text-sm font-medium text-primary-600">
                   {user?.name?.charAt(0) || "U"}
                 </span>
@@ -136,9 +209,10 @@ export default function ApplicationModal({
           {/* Cover Letter */}
           <div>
             <label htmlFor="coverLetter" className="block text-sm font-medium text-gray-700">
-              Cover Letter
+              Cover Letter <span className="text-red-500" aria-hidden="true">*</span>
+              <span className="sr-only">(required)</span>
             </label>
-            <p className="text-sm text-gray-500 mb-2">
+            <p id="coverLetter-hint" className="text-sm text-gray-500 mb-2">
               Introduce yourself and explain why you&apos;re a great fit for this role
             </p>
             <textarea
@@ -147,26 +221,29 @@ export default function ApplicationModal({
               onChange={(e) => setCoverLetter(e.target.value)}
               rows={8}
               required
-              className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+              aria-required="true"
+              aria-describedby={`coverLetter-hint${error ? " application-error" : ""}`}
+              className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
               placeholder="Dear Hiring Team,&#10;&#10;I am excited to apply for this position because..."
             />
           </div>
 
           {/* Resume Upload */}
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label htmlFor="resume-upload" className="block text-sm font-medium text-gray-700">
               Resume (Optional)
             </label>
-            <p className="text-sm text-gray-500 mb-2">
+            <p id="resume-hint" className="text-sm text-gray-500 mb-2">
               Upload your resume in PDF or Word format (max 10MB)
             </p>
             <div className="mt-1 flex items-center gap-4">
-              <label className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+              <label className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus-within:ring-2 focus-within:ring-primary-500 focus-within:ring-offset-2">
                 <svg
                   className="h-5 w-5 mr-2 text-gray-400"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
@@ -177,10 +254,12 @@ export default function ApplicationModal({
                 </svg>
                 Choose File
                 <input
+                  id="resume-upload"
                   type="file"
                   accept=".pdf,.doc,.docx"
                   onChange={handleFileChange}
-                  className="hidden"
+                  aria-describedby="resume-hint"
+                  className="sr-only"
                 />
               </label>
               {resumeFile && (
@@ -190,6 +269,7 @@ export default function ApplicationModal({
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
+                    aria-hidden="true"
                   >
                     <path
                       strokeLinecap="round"
@@ -198,11 +278,12 @@ export default function ApplicationModal({
                       d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                  {resumeFile.name}
+                  <span aria-live="polite">{resumeFile.name}</span>
                   <button
                     type="button"
                     onClick={() => setResumeFile(null)}
-                    className="text-red-500 hover:text-red-700"
+                    className="text-red-500 hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 rounded"
+                    aria-label={`Remove uploaded file ${resumeFile.name}`}
                   >
                     Remove
                   </button>
@@ -216,14 +297,15 @@ export default function ApplicationModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting || !coverLetter.trim()}
-              className="flex-1 px-4 py-3 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-disabled={isSubmitting || !coverLetter.trim()}
+              className="flex-1 px-4 py-3 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
             >
               {isSubmitting ? "Submitting..." : "Submit Application"}
             </button>

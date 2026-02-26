@@ -63,6 +63,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             >
               Church Profile
             </Link>
+            <Link
+              href="/admin/analytics"
+              className="text-sm font-medium text-gray-700 hover:text-primary-600"
+            >
+              Analytics
+            </Link>
           </div>
         </div>
       </div>

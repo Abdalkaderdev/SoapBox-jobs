@@ -4,6 +4,7 @@ import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { getJobApplications, updateApplicationStatus } from "@/lib/applications";
+import { addMessage } from "@/lib/messages";
 import { getJobById } from "@/lib/jobs";
 import { mockUsers } from "@/lib/mock-users";
 import {
@@ -66,6 +67,18 @@ export default function JobApplicationsPage({ params }: ApplicationsPageProps) {
   const [expandedApplication, setExpandedApplication] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Bulk action state
+  const [selectedApplications, setSelectedApplications] = useState<Set<string>>(new Set());
+  const [showBulkStatusMenu, setShowBulkStatusMenu] = useState(false);
+  const [showBulkMessageModal, setShowBulkMessageModal] = useState(false);
+  const [bulkMessage, setBulkMessage] = useState("");
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [pendingBulkAction, setPendingBulkAction] = useState<{
+    type: "status" | "message";
+    status?: ApplicationStatus;
+  } | null>(null);
+  const [isBulkActionInProgress, setIsBulkActionInProgress] = useState(false);
+
   useEffect(() => {
     if (id) {
       const jobData = getJobById(id);
@@ -126,6 +139,91 @@ export default function JobApplicationsPage({ params }: ApplicationsPageProps) {
 
   const toggleExpanded = (applicationId: string) => {
     setExpandedApplication((prev) => (prev === applicationId ? null : applicationId));
+  };
+
+  // Bulk action handlers
+  const handleSelectApplication = (applicationId: string, isSelected: boolean) => {
+    setSelectedApplications((prev) => {
+      const newSet = new Set(prev);
+      if (isSelected) {
+        newSet.add(applicationId);
+      } else {
+        newSet.delete(applicationId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = (isSelected: boolean) => {
+    if (isSelected) {
+      setSelectedApplications(new Set(applications.map((app) => app.id)));
+    } else {
+      setSelectedApplications(new Set());
+    }
+  };
+
+  const isAllSelected = applications.length > 0 && selectedApplications.size === applications.length;
+  const isSomeSelected = selectedApplications.size > 0 && selectedApplications.size < applications.length;
+
+  const handleBulkStatusSelect = (status: ApplicationStatus) => {
+    setPendingBulkAction({ type: "status", status });
+    setShowBulkStatusMenu(false);
+    setShowConfirmationModal(true);
+  };
+
+  const handleBulkMessageOpen = () => {
+    setShowBulkMessageModal(true);
+  };
+
+  const handleBulkMessageSubmit = () => {
+    if (!bulkMessage.trim()) return;
+    setPendingBulkAction({ type: "message" });
+    setShowBulkMessageModal(false);
+    setShowConfirmationModal(true);
+  };
+
+  const executeBulkAction = async () => {
+    if (!pendingBulkAction || !user) return;
+
+    setIsBulkActionInProgress(true);
+
+    try {
+      if (pendingBulkAction.type === "status" && pendingBulkAction.status) {
+        // Update status for all selected applications
+        selectedApplications.forEach((appId) => {
+          updateApplicationStatus(appId, pendingBulkAction.status!);
+        });
+        setApplications(getJobApplications(id));
+      } else if (pendingBulkAction.type === "message") {
+        // Send message to all selected applications
+        selectedApplications.forEach((appId) => {
+          addMessage(
+            appId,
+            user.id,
+            user.name,
+            "employer",
+            bulkMessage
+          );
+        });
+      }
+
+      // Clear selection and reset state
+      setSelectedApplications(new Set());
+      setBulkMessage("");
+    } finally {
+      setIsBulkActionInProgress(false);
+      setShowConfirmationModal(false);
+      setPendingBulkAction(null);
+    }
+  };
+
+  const cancelBulkAction = () => {
+    setShowConfirmationModal(false);
+    setPendingBulkAction(null);
+    if (pendingBulkAction?.type === "message") {
+      // Reopen the message modal if they want to edit
+      setShowBulkMessageModal(true);
+    }
   };
 
   const StarRating = ({
@@ -231,63 +329,181 @@ export default function JobApplicationsPage({ params }: ApplicationsPageProps) {
         </p>
       </div>
 
+      {/* Bulk Action Bar */}
+      {selectedApplications.size > 0 && (
+        <div className="mb-4 bg-primary-50 border border-primary-200 rounded-lg p-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-medium text-primary-700">
+              {selectedApplications.size} selected
+            </span>
+            <button
+              onClick={() => setSelectedApplications(new Set())}
+              className="text-sm text-primary-600 hover:text-primary-800 underline"
+            >
+              Clear selection
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            {/* Update Status Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setShowBulkStatusMenu(!showBulkStatusMenu)}
+                className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                Update Status
+                <svg
+                  className={`ml-2 h-4 w-4 transition-transform ${showBulkStatusMenu ? "rotate-180" : ""}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {showBulkStatusMenu && (
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                  <div className="py-1">
+                    {Object.entries(APPLICATION_STATUS_LABELS).map(([value, label]) => (
+                      <button
+                        key={value}
+                        onClick={() => handleBulkStatusSelect(value as ApplicationStatus)}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                      >
+                        <span
+                          className={`inline-block w-2 h-2 rounded-full ${
+                            APPLICATION_STATUS_COLORS[value as ApplicationStatus].replace("text-", "bg-").split(" ")[0]
+                          }`}
+                        ></span>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Send Message Button */}
+            <button
+              onClick={handleBulkMessageOpen}
+              className="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              <svg
+                className="h-4 w-4 mr-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+                />
+              </svg>
+              Send Message
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Applications List */}
       {applications.length > 0 ? (
         <div className="space-y-4">
+          {/* Select All Header */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex items-center gap-4">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isAllSelected}
+                ref={(input) => {
+                  if (input) {
+                    input.indeterminate = isSomeSelected;
+                  }
+                }}
+                onChange={(e) => handleSelectAll(e.target.checked)}
+                className="h-5 w-5 text-primary-600 rounded border-gray-300 focus:ring-primary-500 cursor-pointer"
+              />
+              <span className="text-sm font-medium text-gray-700">
+                {isAllSelected
+                  ? "Deselect all"
+                  : isSomeSelected
+                  ? `${selectedApplications.size} selected`
+                  : "Select all"}
+              </span>
+            </label>
+          </div>
+
           {applications.map((application) => {
             const applicantName = getApplicantName(application.userId);
             const applicantEmail = getApplicantEmail(application.userId);
             const appReviewData = reviewData[application.id] || { rating: 0, notes: "" };
             const isExpanded = expandedApplication === application.id;
+            const isSelected = selectedApplications.has(application.id);
 
             return (
               <div
                 key={application.id}
-                className="bg-white rounded-lg shadow-sm border border-gray-200"
+                className={`bg-white rounded-lg shadow-sm border ${
+                  isSelected ? "border-primary-400 ring-2 ring-primary-100" : "border-gray-200"
+                }`}
               >
                 {/* Application Header */}
                 <div className="p-6">
                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                    {/* Applicant Info */}
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
-                          <span className="text-lg font-semibold text-primary-600">
-                            {applicantName.charAt(0).toUpperCase()}
-                          </span>
+                    {/* Checkbox and Applicant Info */}
+                    <div className="flex-1 flex items-start gap-4">
+                      {/* Checkbox */}
+                      <div className="pt-1">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={(e) => handleSelectApplication(application.id, e.target.checked)}
+                          className="h-5 w-5 text-primary-600 rounded border-gray-300 focus:ring-primary-500 cursor-pointer"
+                          aria-label={`Select application from ${applicantName}`}
+                        />
+                      </div>
+
+                      {/* Applicant Info */}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                            <span className="text-lg font-semibold text-primary-600">
+                              {applicantName.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                          <div>
+                            <Link
+                              href={`/admin/applications/${application.id}`}
+                              className="text-lg font-semibold text-gray-900 hover:text-primary-600"
+                            >
+                              {applicantName}
+                            </Link>
+                            {applicantEmail && (
+                              <p className="text-sm text-gray-500">{applicantEmail}</p>
+                            )}
+                          </div>
                         </div>
-                        <div>
-                          <Link
-                            href={`/admin/applications/${application.id}`}
-                            className="text-lg font-semibold text-gray-900 hover:text-primary-600"
-                          >
-                            {applicantName}
-                          </Link>
-                          {applicantEmail && (
-                            <p className="text-sm text-gray-500">{applicantEmail}</p>
+                        <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                          <span>Applied {formatDate(application.appliedAt)}</span>
+                          {application.resumeFilename && (
+                            <span className="flex items-center gap-1">
+                              <svg
+                                className="h-4 w-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+                                />
+                              </svg>
+                              Resume attached
+                            </span>
                           )}
                         </div>
-                      </div>
-                      <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-gray-500">
-                        <span>Applied {formatDate(application.appliedAt)}</span>
-                        {application.resumeFilename && (
-                          <span className="flex items-center gap-1">
-                            <svg
-                              className="h-4 w-4"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
-                              />
-                            </svg>
-                            Resume attached
-                          </span>
-                        )}
                       </div>
                     </div>
 
@@ -429,6 +645,132 @@ export default function JobApplicationsPage({ params }: ApplicationsPageProps) {
             View Job Posting
           </Link>
         </div>
+      )}
+
+      {/* Bulk Message Modal */}
+      {showBulkMessageModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Send Message to {selectedApplications.size} Applicant{selectedApplications.size !== 1 ? "s" : ""}
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowBulkMessageModal(false);
+                    setBulkMessage("");
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <p className="text-sm text-gray-500 mb-4">
+                This message will be sent to all selected applicants.
+              </p>
+              <textarea
+                value={bulkMessage}
+                onChange={(e) => setBulkMessage(e.target.value)}
+                placeholder="Type your message here..."
+                rows={6}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm text-gray-900 resize-none"
+              />
+              <div className="mt-4 flex justify-end gap-3">
+                <button
+                  onClick={() => {
+                    setShowBulkMessageModal(false);
+                    setBulkMessage("");
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleBulkMessageSubmit}
+                  disabled={!bulkMessage.trim()}
+                  className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Send Message
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {showConfirmationModal && pendingBulkAction && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="p-6">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="flex-shrink-0 w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
+                  <svg
+                    className="h-6 w-6 text-primary-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Confirm Bulk Action
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    {pendingBulkAction.type === "status"
+                      ? `Are you sure you want to update the status to "${APPLICATION_STATUS_LABELS[pendingBulkAction.status!]}" for ${selectedApplications.size} application${selectedApplications.size !== 1 ? "s" : ""}?`
+                      : `Are you sure you want to send this message to ${selectedApplications.size} applicant${selectedApplications.size !== 1 ? "s" : ""}?`}
+                  </p>
+                </div>
+              </div>
+              {pendingBulkAction.type === "message" && (
+                <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{bulkMessage}</p>
+                </div>
+              )}
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={cancelBulkAction}
+                  disabled={isBulkActionInProgress}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={executeBulkAction}
+                  disabled={isBulkActionInProgress}
+                  className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isBulkActionInProgress && (
+                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  )}
+                  {pendingBulkAction.type === "status" ? "Update Status" : "Send Message"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Click outside to close bulk status menu */}
+      {showBulkStatusMenu && (
+        <div
+          className="fixed inset-0 z-0"
+          onClick={() => setShowBulkStatusMenu(false)}
+        ></div>
       )}
     </div>
   );

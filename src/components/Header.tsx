@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSavedJobs } from "@/contexts/SavedJobsContext";
@@ -11,6 +11,8 @@ export default function Header() {
   const { user, isAuthenticated, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
+  const menuRef = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
 
   // Close menu on route change
   useEffect(() => {
@@ -29,35 +31,73 @@ export default function Header() {
     };
   }, [isMenuOpen]);
 
+  // Handle keyboard navigation for mobile menu
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (!isMenuOpen) return;
+
+    if (e.key === "Escape") {
+      setIsMenuOpen(false);
+      menuButtonRef.current?.focus();
+    }
+
+    // Focus trap for mobile menu
+    if (e.key === "Tab" && menuRef.current) {
+      const focusableElements = menuRef.current.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (e.shiftKey && document.activeElement === firstElement) {
+        e.preventDefault();
+        lastElement?.focus();
+      } else if (!e.shiftKey && document.activeElement === lastElement) {
+        e.preventDefault();
+        firstElement?.focus();
+      }
+    }
+  }, [isMenuOpen]);
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
+
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const closeMenu = () => setIsMenuOpen(false);
 
   return (
-    <header className="bg-white border-b border-gray-200">
+    <header className="bg-white border-b border-gray-200" role="banner">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
-            <Link href="/" className="flex items-center">
+            <Link
+              href="/"
+              className="flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 rounded-lg"
+              aria-label="SoapBox Jobs - Go to homepage"
+            >
               <span className="text-2xl font-bold text-primary-600">SoapBox</span>
               <span className="text-2xl font-light text-gray-600 ml-1">Jobs</span>
             </Link>
           </div>
 
           {/* Desktop Navigation - hidden on mobile */}
-          <nav className="hidden md:flex items-center space-x-4">
+          <nav className="hidden md:flex items-center space-x-4" aria-label="Main navigation">
             <Link
               href="/jobs"
-              className="text-gray-600 hover:text-primary-600 px-3 py-2 text-sm font-medium"
+              className="text-gray-600 hover:text-primary-600 px-3 py-2 text-sm font-medium rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+              aria-label="Browse all job listings"
             >
               Browse Jobs
             </Link>
             <Link
               href="/jobs/saved"
-              className="text-gray-600 hover:text-primary-600 px-3 py-2 text-sm font-medium flex items-center gap-1"
+              className="text-gray-600 hover:text-primary-600 px-3 py-2 text-sm font-medium flex items-center gap-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+              aria-label={`Saved Jobs${savedJobsCount > 0 ? `, ${savedJobsCount} jobs saved` : ""}`}
             >
               Saved Jobs
               {savedJobsCount > 0 && (
-                <span className="bg-primary-600 text-white text-xs rounded-full px-2 py-0.5 min-w-[20px] text-center">
+                <span className="bg-primary-600 text-white text-xs rounded-full px-2 py-0.5 min-w-[20px] text-center" aria-hidden="true">
                   {savedJobsCount}
                 </span>
               )}
@@ -65,7 +105,8 @@ export default function Header() {
             {isAuthenticated && user?.role === "church_admin" && (
               <Link
                 href="/admin"
-                className="text-gray-600 hover:text-primary-600 px-3 py-2 text-sm font-medium"
+                className="text-gray-600 hover:text-primary-600 px-3 py-2 text-sm font-medium rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+                aria-label="Church administration dashboard"
               >
                 Church Admin
               </Link>
@@ -74,13 +115,15 @@ export default function Header() {
               <>
                 <Link
                   href="/applications"
-                  className="text-gray-600 hover:text-primary-600 px-3 py-2 text-sm font-medium"
+                  className="text-gray-600 hover:text-primary-600 px-3 py-2 text-sm font-medium rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+                  aria-label="View your job applications"
                 >
                   My Applications
                 </Link>
                 <Link
                   href="/alerts"
-                  className="text-gray-600 hover:text-primary-600 px-3 py-2 text-sm font-medium"
+                  className="text-gray-600 hover:text-primary-600 px-3 py-2 text-sm font-medium rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+                  aria-label="Manage your job alerts"
                 >
                   Job Alerts
                 </Link>
@@ -88,7 +131,8 @@ export default function Header() {
             )}
             <Link
               href="#"
-              className="text-gray-600 hover:text-primary-600 px-3 py-2 text-sm font-medium"
+              className="text-gray-600 hover:text-primary-600 px-3 py-2 text-sm font-medium rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+              aria-label="Information for churches posting jobs"
             >
               For Churches
             </Link>
@@ -96,9 +140,10 @@ export default function Header() {
               <div className="flex items-center gap-3">
                 <Link
                   href="/profile"
-                  className="flex items-center gap-2 text-gray-700 hover:text-primary-600"
+                  className="flex items-center gap-2 text-gray-700 hover:text-primary-600 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 p-1"
+                  aria-label={`View profile for ${user?.name || "user"}`}
                 >
-                  <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
+                  <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center" aria-hidden="true">
                     <span className="text-sm font-medium text-primary-600">
                       {user?.name?.charAt(0) || "U"}
                     </span>
@@ -107,7 +152,8 @@ export default function Header() {
                 </Link>
                 <button
                   onClick={logout}
-                  className="text-gray-500 hover:text-gray-700 px-3 py-2 text-sm font-medium"
+                  className="text-gray-500 hover:text-gray-700 px-3 py-2 text-sm font-medium rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+                  aria-label="Sign out of your account"
                 >
                   Sign Out
                 </button>
@@ -115,7 +161,8 @@ export default function Header() {
             ) : (
               <Link
                 href="/auth/signin"
-                className="bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-700"
+                className="bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+                aria-label="Sign in to your account"
               >
                 Sign In
               </Link>
@@ -124,10 +171,12 @@ export default function Header() {
 
           {/* Mobile Hamburger Button - visible only on mobile */}
           <button
+            ref={menuButtonRef}
             onClick={toggleMenu}
-            className="md:hidden p-2 rounded-md text-gray-600 hover:text-primary-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
-            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+            className="md:hidden p-2 rounded-md text-gray-600 hover:text-primary-600 hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+            aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
             aria-expanded={isMenuOpen}
+            aria-controls="mobile-navigation"
           >
             {isMenuOpen ? (
               // Close icon (X)
@@ -175,6 +224,11 @@ export default function Header() {
 
       {/* Mobile Navigation Drawer - slides from right */}
       <div
+        ref={menuRef}
+        id="mobile-navigation"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Navigation menu"
         className={`fixed top-0 right-0 h-full w-80 max-w-[85vw] bg-white z-50 shadow-xl transform transition-transform duration-300 ease-in-out md:hidden ${
           isMenuOpen ? "translate-x-0" : "translate-x-full"
         }`}
@@ -182,11 +236,11 @@ export default function Header() {
         <div className="flex flex-col h-full">
           {/* Drawer Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <span className="text-lg font-semibold text-gray-800">Menu</span>
+            <span className="text-lg font-semibold text-gray-800" id="mobile-menu-title">Menu</span>
             <button
               onClick={closeMenu}
-              className="p-2 rounded-md text-gray-600 hover:text-primary-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              aria-label="Close menu"
+              className="p-2 rounded-md text-gray-600 hover:text-primary-600 hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+              aria-label="Close navigation menu"
             >
               <svg
                 className="h-6 w-6"
@@ -226,13 +280,14 @@ export default function Header() {
           )}
 
           {/* Navigation Links */}
-          <nav className="flex-1 overflow-y-auto p-4">
-            <ul className="space-y-1">
+          <nav className="flex-1 overflow-y-auto p-4" aria-label="Mobile navigation">
+            <ul className="space-y-1" role="list">
               <li>
                 <Link
                   href="/jobs"
                   onClick={closeMenu}
-                  className="flex items-center px-4 py-3 text-gray-700 hover:bg-primary-50 hover:text-primary-600 rounded-lg transition-colors"
+                  className="flex items-center px-4 py-3 text-gray-700 hover:bg-primary-50 hover:text-primary-600 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+                  aria-label="Browse all job listings"
                 >
                   <svg
                     className="w-5 h-5 mr-3"
@@ -254,7 +309,8 @@ export default function Header() {
                 <Link
                   href="/jobs/saved"
                   onClick={closeMenu}
-                  className="flex items-center px-4 py-3 text-gray-700 hover:bg-primary-50 hover:text-primary-600 rounded-lg transition-colors"
+                  className="flex items-center px-4 py-3 text-gray-700 hover:bg-primary-50 hover:text-primary-600 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+                  aria-label={`Saved Jobs${savedJobsCount > 0 ? `, ${savedJobsCount} jobs saved` : ""}`}
                 >
                   <svg
                     className="w-5 h-5 mr-3"
@@ -262,6 +318,7 @@ export default function Header() {
                     viewBox="0 0 24 24"
                     stroke="currentColor"
                     strokeWidth={2}
+                    aria-hidden="true"
                   >
                     <path
                       strokeLinecap="round"
@@ -271,7 +328,7 @@ export default function Header() {
                   </svg>
                   Saved Jobs
                   {savedJobsCount > 0 && (
-                    <span className="ml-auto bg-primary-600 text-white text-xs rounded-full px-2 py-0.5 min-w-[20px] text-center">
+                    <span className="ml-auto bg-primary-600 text-white text-xs rounded-full px-2 py-0.5 min-w-[20px] text-center" aria-hidden="true">
                       {savedJobsCount}
                     </span>
                   )}
@@ -283,7 +340,8 @@ export default function Header() {
                     <Link
                       href="/applications"
                       onClick={closeMenu}
-                      className="flex items-center px-4 py-3 text-gray-700 hover:bg-primary-50 hover:text-primary-600 rounded-lg transition-colors"
+                      className="flex items-center px-4 py-3 text-gray-700 hover:bg-primary-50 hover:text-primary-600 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+                      aria-label="View your job applications"
                     >
                       <svg
                         className="w-5 h-5 mr-3"
@@ -291,6 +349,7 @@ export default function Header() {
                         viewBox="0 0 24 24"
                         stroke="currentColor"
                         strokeWidth={2}
+                        aria-hidden="true"
                       >
                         <path
                           strokeLinecap="round"
@@ -305,7 +364,8 @@ export default function Header() {
                     <Link
                       href="/alerts"
                       onClick={closeMenu}
-                      className="flex items-center px-4 py-3 text-gray-700 hover:bg-primary-50 hover:text-primary-600 rounded-lg transition-colors"
+                      className="flex items-center px-4 py-3 text-gray-700 hover:bg-primary-50 hover:text-primary-600 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+                      aria-label="Manage your job alerts"
                     >
                       <svg
                         className="w-5 h-5 mr-3"
@@ -313,6 +373,7 @@ export default function Header() {
                         viewBox="0 0 24 24"
                         stroke="currentColor"
                         strokeWidth={2}
+                        aria-hidden="true"
                       >
                         <path
                           strokeLinecap="round"
@@ -330,7 +391,8 @@ export default function Header() {
                   <Link
                     href="/admin"
                     onClick={closeMenu}
-                    className="flex items-center px-4 py-3 text-gray-700 hover:bg-primary-50 hover:text-primary-600 rounded-lg transition-colors"
+                    className="flex items-center px-4 py-3 text-gray-700 hover:bg-primary-50 hover:text-primary-600 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+                    aria-label="Church administration dashboard"
                   >
                     <svg
                       className="w-5 h-5 mr-3"
@@ -338,6 +400,7 @@ export default function Header() {
                       viewBox="0 0 24 24"
                       stroke="currentColor"
                       strokeWidth={2}
+                      aria-hidden="true"
                     >
                       <path
                         strokeLinecap="round"
@@ -353,7 +416,8 @@ export default function Header() {
                 <Link
                   href="#"
                   onClick={closeMenu}
-                  className="flex items-center px-4 py-3 text-gray-700 hover:bg-primary-50 hover:text-primary-600 rounded-lg transition-colors"
+                  className="flex items-center px-4 py-3 text-gray-700 hover:bg-primary-50 hover:text-primary-600 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+                  aria-label="Information for churches posting jobs"
                 >
                   <svg
                     className="w-5 h-5 mr-3"
@@ -361,6 +425,7 @@ export default function Header() {
                     viewBox="0 0 24 24"
                     stroke="currentColor"
                     strokeWidth={2}
+                    aria-hidden="true"
                   >
                     <path
                       strokeLinecap="round"
@@ -382,7 +447,8 @@ export default function Header() {
                   logout();
                   closeMenu();
                 }}
-                className="w-full flex items-center justify-center px-4 py-3 text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-lg border border-gray-300 transition-colors"
+                className="w-full flex items-center justify-center px-4 py-3 text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-lg border border-gray-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+                aria-label="Sign out of your account"
               >
                 <svg
                   className="w-5 h-5 mr-2"
@@ -390,6 +456,7 @@ export default function Header() {
                   viewBox="0 0 24 24"
                   stroke="currentColor"
                   strokeWidth={2}
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
@@ -403,7 +470,8 @@ export default function Header() {
               <Link
                 href="/auth/signin"
                 onClick={closeMenu}
-                className="w-full flex items-center justify-center px-4 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
+                className="w-full flex items-center justify-center px-4 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+                aria-label="Sign in to your account"
               >
                 <svg
                   className="w-5 h-5 mr-2"
@@ -411,6 +479,7 @@ export default function Header() {
                   viewBox="0 0 24 24"
                   stroke="currentColor"
                   strokeWidth={2}
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"

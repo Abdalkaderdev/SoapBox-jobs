@@ -303,104 +303,104 @@ Branch: `feature/mvp`
 
 ### US-030: Add loading states and error handling
 
-- [ ] Add loading skeleton for job cards
-- [ ] Add loading state for job detail page
-- [ ] Add error boundary component
-- [ ] Show user-friendly error messages
-- [ ] Add retry button on error states
-- [ ] Handle network errors gracefully
-- [ ] `npm run build` succeeds without errors
+- [x] Add loading skeleton for job cards
+- [x] Add loading state for job detail page
+- [x] Add error boundary component
+- [x] Show user-friendly error messages
+- [x] Add retry button on error states
+- [x] Handle network errors gracefully
+- [x] `npm run build` succeeds without errors
 
 ### US-031: Implement accessibility improvements
 
-- [ ] Add proper ARIA labels to all interactive elements
-- [ ] Ensure keyboard navigation works throughout
-- [ ] Add skip to main content link
-- [ ] Verify color contrast meets WCAG AA standards
-- [ ] Add focus indicators to all focusable elements
-- [ ] Test with screen reader and fix issues
-- [ ] `npm run build` succeeds without errors
+- [x] Add proper ARIA labels to all interactive elements
+- [x] Ensure keyboard navigation works throughout
+- [x] Add skip to main content link
+- [x] Verify color contrast meets WCAG AA standards
+- [x] Add focus indicators to all focusable elements
+- [x] Test with screen reader and fix issues
+- [x] `npm run build` succeeds without errors
 
 ### US-032: Add analytics tracking setup
 
-- [ ] Create `lib/analytics.ts` with tracking functions
-- [ ] Track page views on route changes
-- [ ] Track job card clicks
-- [ ] Track apply button clicks
-- [ ] Track search queries
-- [ ] Track filter usage
-- [ ] Log events to console (mock analytics)
-- [ ] `npm run build` succeeds without errors
+- [x] Create `lib/analytics.ts` with tracking functions
+- [x] Track page views on route changes
+- [x] Track job card clicks
+- [x] Track apply button clicks
+- [x] Track search queries
+- [x] Track filter usage
+- [x] Log events to console (mock analytics)
+- [x] `npm run build` succeeds without errors
 
 ### US-033: Create admin analytics dashboard
 
-- [ ] Create `/admin/analytics` page
-- [ ] Display job listing performance: views, applications, conversion rate
-- [ ] Show applications by status chart
-- [ ] Display time-to-fill metrics
-- [ ] Add date range filter
-- [ ] Use mock data for charts
-- [ ] `npm run build` succeeds without errors
+- [x] Create `/admin/analytics` page
+- [x] Display job listing performance: views, applications, conversion rate
+- [x] Show applications by status chart
+- [x] Display time-to-fill metrics
+- [x] Add date range filter
+- [x] Use mock data for charts
+- [x] `npm run build` succeeds without errors
 
 ### US-034: Implement job templates for church admins
 
-- [ ] Add "Save as Template" button on job form
-- [ ] Create `/admin/templates` page listing saved templates
-- [ ] "Use Template" button pre-fills job form
-- [ ] Edit and delete templates
-- [ ] Store templates in localStorage
-- [ ] `npm run build` succeeds without errors
+- [x] Add "Save as Template" button on job form
+- [x] Create `/admin/templates` page listing saved templates
+- [x] "Use Template" button pre-fills job form
+- [x] Edit and delete templates
+- [x] Store templates in localStorage
+- [x] `npm run build` succeeds without errors
 
 ### US-035: Add bulk actions for applications
 
-- [ ] Add checkbox to select multiple applications on admin view
-- [ ] Add "Select All" checkbox in header
-- [ ] Add bulk action dropdown: Update status, Send message
-- [ ] Apply action to all selected applications
-- [ ] Show confirmation before bulk action
-- [ ] `npm run build` succeeds without errors
+- [x] Add checkbox to select multiple applications on admin view
+- [x] Add "Select All" checkbox in header
+- [x] Add bulk action dropdown: Update status, Send message
+- [x] Apply action to all selected applications
+- [x] Show confirmation before bulk action
+- [x] `npm run build` succeeds without errors
 
 ### US-036: Implement email notification preferences
 
-- [ ] Add notification preferences section to user profile
-- [ ] Options: Email on application status change, Email on new message, Job alert emails
-- [ ] Frequency options: Immediate, Daily digest, Weekly digest, Never
-- [ ] Save preferences to localStorage
-- [ ] Mock email sending with console.log
-- [ ] `npm run build` succeeds without errors
+- [x] Add notification preferences section to user profile
+- [x] Options: Email on application status change, Email on new message, Job alert emails
+- [x] Frequency options: Immediate, Daily digest, Weekly digest, Never
+- [x] Save preferences to localStorage
+- [x] Mock email sending with console.log
+- [x] `npm run build` succeeds without errors
 
 ### US-037: Create home page featured jobs section
 
-- [ ] Add featured jobs section to home page
-- [ ] Display 6 most recent jobs
-- [ ] Use JobCard component
-- [ ] Add "View All Jobs" button
-- [ ] Style section with heading and description
-- [ ] `npm run build` succeeds without errors
+- [x] Add featured jobs section to home page
+- [x] Display 6 most recent jobs
+- [x] Use JobCard component
+- [x] Add "View All Jobs" button
+- [x] Style section with heading and description
+- [x] `npm run build` succeeds without errors
 
 ### US-038: Add category browse on home page
 
-- [ ] Add job categories section to home page
-- [ ] Display category cards with icons
-- [ ] Show job count per category
-- [ ] Click category navigates to jobs page with filter applied
-- [ ] Style in responsive grid
-- [ ] `npm run build` succeeds without errors
+- [x] Add job categories section to home page
+- [x] Display category cards with icons
+- [x] Show job count per category
+- [x] Click category navigates to jobs page with filter applied
+- [x] Style in responsive grid
+- [x] `npm run build` succeeds without errors
 
 ### US-039: Implement infinite scroll or pagination
 
-- [ ] Add pagination or infinite scroll to jobs listing
-- [ ] Show 12 jobs per page
-- [ ] Display page numbers or "Load More" button
-- [ ] Maintain filters when changing pages
-- [ ] Update URL with page param
-- [ ] `npm run build` succeeds without errors
+- [x] Add pagination or infinite scroll to jobs listing
+- [x] Show 12 jobs per page
+- [x] Display page numbers or "Load More" button
+- [x] Maintain filters when changing pages
+- [x] Update URL with page param
+- [x] `npm run build` succeeds without errors
 
 ### US-040: Add SEO metadata
 
-- [ ] Add metadata to home page (title, description, og tags)
-- [ ] Add dynamic metadata to job detail pages
-- [ ] Add metadata to church profile pages
-- [ ] Create sitemap.xml
-- [ ] Create robots.txt
-- [ ] `npm run build` succeeds without errors
+- [x] Add metadata to home page (title, description, og tags)
+- [x] Add dynamic metadata to job detail pages
+- [x] Add metadata to church profile pages
+- [x] Create sitemap.xml
+- [x] Create robots.txt
+- [x] `npm run build` succeeds without errors

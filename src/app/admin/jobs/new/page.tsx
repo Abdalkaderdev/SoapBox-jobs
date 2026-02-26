@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { createJob, CreateJobInput } from "@/lib/jobs";
 import { getChurchName } from "@/lib/admin";
+import { getTemplateById, saveTemplate } from "@/lib/templates";
 import {
   JOB_CATEGORIES,
   EMPLOYMENT_TYPES,
@@ -41,10 +42,15 @@ interface FormErrors {
 
 export default function NewJobPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const [showPreview, setShowPreview] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [templateName, setTemplateName] = useState("");
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+  const [templateSaveSuccess, setTemplateSaveSuccess] = useState(false);
 
   const [formData, setFormData] = useState<FormData>({
     title: "",
@@ -60,7 +66,56 @@ export default function NewJobPage() {
     responsibilities: "",
   });
 
+  // Load template data if template query param is present
+  useEffect(() => {
+    const templateId = searchParams.get("template");
+    if (templateId) {
+      const template = getTemplateById(templateId);
+      if (template) {
+        setFormData((prev) => ({
+          ...prev,
+          title: template.data.title || "",
+          category: (template.data.category as JobCategory) || "Pastoral",
+          employmentType: (template.data.employmentType as EmploymentType) || "Full-time",
+          workArrangement: (template.data.workArrangement as WorkArrangement) || "On-site",
+          description: template.data.description || "",
+          qualifications: template.data.qualifications || "",
+          responsibilities: template.data.responsibilities || "",
+        }));
+      }
+    }
+  }, [searchParams]);
+
   const churchName = user?.churchId ? getChurchName(user.churchId) : "Your Church";
+
+  const handleSaveAsTemplate = () => {
+    if (!templateName.trim() || !user?.churchId) return;
+
+    setIsSavingTemplate(true);
+
+    saveTemplate({
+      churchId: user.churchId,
+      name: templateName.trim(),
+      data: {
+        title: formData.title,
+        category: formData.category,
+        employmentType: formData.employmentType,
+        workArrangement: formData.workArrangement,
+        description: formData.description,
+        qualifications: formData.qualifications,
+        responsibilities: formData.responsibilities,
+      },
+    });
+
+    setIsSavingTemplate(false);
+    setTemplateSaveSuccess(true);
+
+    setTimeout(() => {
+      setShowTemplateModal(false);
+      setTemplateName("");
+      setTemplateSaveSuccess(false);
+    }, 1500);
+  };
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -473,31 +528,127 @@ export default function NewJobPage() {
         </div>
 
         {/* Actions */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-end">
+        <div className="flex flex-col sm:flex-row gap-4 justify-between">
           <button
             type="button"
-            onClick={() => setShowPreview(true)}
-            className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+            onClick={() => setShowTemplateModal(true)}
+            className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors inline-flex items-center gap-2"
           >
-            Preview
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+            Save as Template
           </button>
-          <button
-            type="button"
-            onClick={(e) => handleSubmit(e, "draft")}
-            disabled={isSubmitting}
-            className="px-6 py-3 border border-primary-600 text-primary-600 rounded-lg font-medium hover:bg-primary-50 transition-colors disabled:opacity-50"
-          >
-            Save as Draft
-          </button>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="px-6 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors disabled:opacity-50"
-          >
-            {isSubmitting ? "Publishing..." : "Publish Job"}
-          </button>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <button
+              type="button"
+              onClick={() => setShowPreview(true)}
+              className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+            >
+              Preview
+            </button>
+            <button
+              type="button"
+              onClick={(e) => handleSubmit(e, "draft")}
+              disabled={isSubmitting}
+              className="px-6 py-3 border border-primary-600 text-primary-600 rounded-lg font-medium hover:bg-primary-50 transition-colors disabled:opacity-50"
+            >
+              Save as Draft
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="px-6 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors disabled:opacity-50"
+            >
+              {isSubmitting ? "Publishing..." : "Publish Job"}
+            </button>
+          </div>
         </div>
       </form>
+
+      {/* Save as Template Modal */}
+      {showTemplateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Save as Template</h3>
+              <button
+                onClick={() => {
+                  setShowTemplateModal(false);
+                  setTemplateName("");
+                  setTemplateSaveSuccess(false);
+                }}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {templateSaveSuccess ? (
+              <div className="text-center py-6">
+                <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                  <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <p className="text-gray-900 font-medium">Template saved successfully!</p>
+              </div>
+            ) : (
+              <>
+                <p className="text-gray-600 mb-4">
+                  Save the current form data as a reusable template for future job postings.
+                </p>
+                <div className="mb-6">
+                  <label htmlFor="templateName" className="block text-sm font-medium text-gray-700 mb-1">
+                    Template Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="templateName"
+                    value={templateName}
+                    onChange={(e) => setTemplateName(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-900"
+                    placeholder="e.g., Youth Pastor Template"
+                    autoFocus
+                  />
+                </div>
+                <div className="flex gap-3 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowTemplateModal(false);
+                      setTemplateName("");
+                    }}
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveAsTemplate}
+                    disabled={!templateName.trim() || isSavingTemplate}
+                    className="px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors disabled:opacity-50"
+                  >
+                    {isSavingTemplate ? "Saving..." : "Save Template"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

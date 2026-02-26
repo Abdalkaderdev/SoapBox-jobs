@@ -27,6 +27,8 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: "salary-low", label: "Salary (low to high)" },
 ];
 
+const JOBS_PER_PAGE = 12;
+
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
 
@@ -52,6 +54,42 @@ function getAnnualSalary(job: Job): number | null {
     return baseSalary * 2080; // 40 hours * 52 weeks
   }
   return baseSalary;
+}
+
+// Generate page numbers to display
+function getPageNumbers(currentPage: number, totalPages: number): (number | "ellipsis")[] {
+  const pages: (number | "ellipsis")[] = [];
+
+  if (totalPages <= 7) {
+    // Show all pages if 7 or fewer
+    for (let i = 1; i <= totalPages; i++) {
+      pages.push(i);
+    }
+  } else {
+    // Always show first page
+    pages.push(1);
+
+    if (currentPage > 3) {
+      pages.push("ellipsis");
+    }
+
+    // Show pages around current page
+    const start = Math.max(2, currentPage - 1);
+    const end = Math.min(totalPages - 1, currentPage + 1);
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+
+    if (currentPage < totalPages - 2) {
+      pages.push("ellipsis");
+    }
+
+    // Always show last page
+    pages.push(totalPages);
+  }
+
+  return pages;
 }
 
 export default function JobsContent() {
@@ -102,6 +140,13 @@ export default function JobsContent() {
     (searchParams.get("sort") as SortOption) || "newest"
   );
 
+  // Pagination state - read from URL
+  const [currentPage, setCurrentPage] = useState(() => {
+    const pageParam = searchParams.get("page");
+    const page = pageParam ? parseInt(pageParam, 10) : 1;
+    return page > 0 ? page : 1;
+  });
+
   const debouncedSearch = useDebounce(searchQuery, 300);
   const debouncedSalaryMin = useDebounce(salaryMin, 300);
   const debouncedSalaryMax = useDebounce(salaryMax, 300);
@@ -118,6 +163,26 @@ export default function JobsContent() {
   // Track search queries (debounced) - moved after filteredAndSortedJobs definition
   const lastTrackedSearch = useRef<string>("");
 
+  // Reset to page 1 when filters change
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    setCurrentPage(1);
+  }, [
+    debouncedSearch,
+    selectedLocation,
+    selectedCategories,
+    selectedEmploymentTypes,
+    selectedWorkArrangements,
+    debouncedSalaryMin,
+    debouncedSalaryMax,
+    showNoSalary,
+    sortBy,
+  ]);
+
   // Update URL when filters change
   useEffect(() => {
     const params = new URLSearchParams();
@@ -130,6 +195,7 @@ export default function JobsContent() {
     if (debouncedSalaryMax) params.set("salaryMax", debouncedSalaryMax);
     if (showNoSalary) params.set("showNoSalary", "true");
     if (sortBy !== "newest") params.set("sort", sortBy);
+    if (currentPage > 1) params.set("page", currentPage.toString());
 
     const queryString = params.toString();
     router.replace(queryString ? `/jobs?${queryString}` : "/jobs", { scroll: false });
@@ -143,6 +209,7 @@ export default function JobsContent() {
     debouncedSalaryMax,
     showNoSalary,
     sortBy,
+    currentPage,
     router,
   ]);
 
@@ -233,6 +300,21 @@ export default function JobsContent() {
     sortBy,
   ]);
 
+  // Pagination calculations
+  const totalJobs = filteredAndSortedJobs.length;
+  const totalPages = Math.ceil(totalJobs / JOBS_PER_PAGE);
+  const startIndex = (currentPage - 1) * JOBS_PER_PAGE;
+  const endIndex = Math.min(startIndex + JOBS_PER_PAGE, totalJobs);
+  const paginatedJobs = filteredAndSortedJobs.slice(startIndex, endIndex);
+  const pageNumbers = getPageNumbers(currentPage, totalPages);
+
+  // Ensure current page is valid when total pages changes
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
   // Track search queries (debounced)
   useEffect(() => {
     if (debouncedSearch && debouncedSearch !== lastTrackedSearch.current) {
@@ -322,6 +404,7 @@ export default function JobsContent() {
     setSalaryMax("");
     setShowNoSalary(false);
     setSortBy("newest");
+    setCurrentPage(1);
   }, []);
 
   const hasActiveFilters =
@@ -381,6 +464,24 @@ export default function JobsContent() {
     selectedEmploymentTypes,
     selectedWorkArrangements,
   ]);
+
+  // Pagination handlers
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  const handlePreviousPage = useCallback(() => {
+    if (currentPage > 1) {
+      handlePageChange(currentPage - 1);
+    }
+  }, [currentPage, handlePageChange]);
+
+  const handleNextPage = useCallback(() => {
+    if (currentPage < totalPages) {
+      handlePageChange(currentPage + 1);
+    }
+  }, [currentPage, totalPages, handlePageChange]);
 
   return (
     <>
@@ -622,17 +723,121 @@ export default function JobsContent() {
       {/* Results count */}
       <div className="mb-4">
         <p className="text-sm text-gray-600">
-          Showing {filteredAndSortedJobs.length} of {mockJobs.length} jobs
+          {totalJobs > 0 ? (
+            <>
+              Showing {startIndex + 1}-{endIndex} of {totalJobs} jobs
+            </>
+          ) : (
+            <>Showing 0 of {mockJobs.length} jobs</>
+          )}
         </p>
       </div>
 
       {/* Job listings grid */}
-      {filteredAndSortedJobs.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredAndSortedJobs.map((job) => (
-            <JobCard key={job.id} job={job} />
-          ))}
-        </div>
+      {paginatedJobs.length > 0 ? (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {paginatedJobs.map((job) => (
+              <JobCard key={job.id} job={job} />
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <nav
+              className="mt-8 flex items-center justify-center"
+              aria-label="Pagination"
+            >
+              <div className="flex items-center gap-1">
+                {/* Previous button */}
+                <button
+                  onClick={handlePreviousPage}
+                  disabled={currentPage === 1}
+                  className={`relative inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg ${
+                    currentPage === 1
+                      ? "text-gray-300 cursor-not-allowed"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                  aria-label="Previous page"
+                >
+                  <svg
+                    className="h-5 w-5"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <span className="ml-1">Previous</span>
+                </button>
+
+                {/* Page numbers */}
+                <div className="hidden sm:flex items-center gap-1">
+                  {pageNumbers.map((pageNum, index) =>
+                    pageNum === "ellipsis" ? (
+                      <span
+                        key={`ellipsis-${index}`}
+                        className="px-3 py-2 text-sm text-gray-500"
+                      >
+                        ...
+                      </span>
+                    ) : (
+                      <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`relative inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg ${
+                          currentPage === pageNum
+                            ? "bg-primary-600 text-white"
+                            : "text-gray-700 hover:bg-gray-100"
+                        }`}
+                        aria-current={currentPage === pageNum ? "page" : undefined}
+                      >
+                        {pageNum}
+                      </button>
+                    )
+                  )}
+                </div>
+
+                {/* Mobile page indicator */}
+                <span className="sm:hidden px-3 py-2 text-sm text-gray-700">
+                  Page {currentPage} of {totalPages}
+                </span>
+
+                {/* Next button */}
+                <button
+                  onClick={handleNextPage}
+                  disabled={currentPage === totalPages}
+                  className={`relative inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg ${
+                    currentPage === totalPages
+                      ? "text-gray-300 cursor-not-allowed"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                  aria-label="Next page"
+                >
+                  <span className="mr-1">Next</span>
+                  <svg
+                    className="h-5 w-5"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </nav>
+          )}
+        </>
       ) : (
         <div className="text-center py-12 bg-white rounded-lg shadow-sm border border-gray-200">
           <svg
