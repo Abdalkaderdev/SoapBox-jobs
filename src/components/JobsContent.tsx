@@ -4,7 +4,24 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import JobCard from "@/components/JobCard";
 import { mockJobs } from "@/lib/mock-data";
-import { JOB_CATEGORIES, JobCategory } from "@/types/job";
+import {
+  JOB_CATEGORIES,
+  JobCategory,
+  EMPLOYMENT_TYPES,
+  EmploymentType,
+  WORK_ARRANGEMENTS,
+  WorkArrangement,
+  Job,
+} from "@/types/job";
+
+type SortOption = "newest" | "oldest" | "salary-high" | "salary-low";
+
+const SORT_OPTIONS: { value: SortOption; label: string }[] = [
+  { value: "newest", label: "Newest first" },
+  { value: "oldest", label: "Oldest first" },
+  { value: "salary-high", label: "Salary (high to low)" },
+  { value: "salary-low", label: "Salary (low to high)" },
+];
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -22,6 +39,17 @@ const locations = Array.from(
   new Set(mockJobs.map((job) => job.location))
 ).sort();
 
+// Helper to get annual salary for comparison
+function getAnnualSalary(job: Job): number | null {
+  if (!job.salary) return null;
+  const { min, max, type } = job.salary;
+  const baseSalary = max || min || 0;
+  if (type === "hourly") {
+    return baseSalary * 2080; // 40 hours * 52 weeks
+  }
+  return baseSalary;
+}
+
 export default function JobsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -38,8 +66,34 @@ export default function JobsContent() {
     }
     return [];
   });
+  const [selectedEmploymentTypes, setSelectedEmploymentTypes] = useState<EmploymentType[]>(() => {
+    const param = searchParams.get("employmentTypes");
+    if (param) {
+      return param.split(",").filter((t): t is EmploymentType =>
+        EMPLOYMENT_TYPES.includes(t as EmploymentType)
+      );
+    }
+    return [];
+  });
+  const [selectedWorkArrangements, setSelectedWorkArrangements] = useState<WorkArrangement[]>(() => {
+    const param = searchParams.get("workArrangements");
+    if (param) {
+      return param.split(",").filter((t): t is WorkArrangement =>
+        WORK_ARRANGEMENTS.includes(t as WorkArrangement)
+      );
+    }
+    return [];
+  });
+  const [salaryMin, setSalaryMin] = useState(searchParams.get("salaryMin") || "");
+  const [salaryMax, setSalaryMax] = useState(searchParams.get("salaryMax") || "");
+  const [showNoSalary, setShowNoSalary] = useState(searchParams.get("showNoSalary") === "true");
+  const [sortBy, setSortBy] = useState<SortOption>(
+    (searchParams.get("sort") as SortOption) || "newest"
+  );
 
   const debouncedSearch = useDebounce(searchQuery, 300);
+  const debouncedSalaryMin = useDebounce(salaryMin, 300);
+  const debouncedSalaryMax = useDebounce(salaryMax, 300);
 
   // Update URL when filters change
   useEffect(() => {
@@ -47,13 +101,30 @@ export default function JobsContent() {
     if (debouncedSearch) params.set("q", debouncedSearch);
     if (selectedLocation) params.set("location", selectedLocation);
     if (selectedCategories.length > 0) params.set("categories", selectedCategories.join(","));
+    if (selectedEmploymentTypes.length > 0) params.set("employmentTypes", selectedEmploymentTypes.join(","));
+    if (selectedWorkArrangements.length > 0) params.set("workArrangements", selectedWorkArrangements.join(","));
+    if (debouncedSalaryMin) params.set("salaryMin", debouncedSalaryMin);
+    if (debouncedSalaryMax) params.set("salaryMax", debouncedSalaryMax);
+    if (showNoSalary) params.set("showNoSalary", "true");
+    if (sortBy !== "newest") params.set("sort", sortBy);
 
     const queryString = params.toString();
     router.replace(queryString ? `/jobs?${queryString}` : "/jobs", { scroll: false });
-  }, [debouncedSearch, selectedLocation, selectedCategories, router]);
+  }, [
+    debouncedSearch,
+    selectedLocation,
+    selectedCategories,
+    selectedEmploymentTypes,
+    selectedWorkArrangements,
+    debouncedSalaryMin,
+    debouncedSalaryMax,
+    showNoSalary,
+    sortBy,
+    router,
+  ]);
 
-  const filteredJobs = useMemo(() => {
-    return mockJobs.filter((job) => {
+  const filteredAndSortedJobs = useMemo(() => {
+    let result = mockJobs.filter((job) => {
       // Text search filter
       if (debouncedSearch.trim()) {
         const query = debouncedSearch.toLowerCase();
@@ -75,16 +146,75 @@ export default function JobsContent() {
         return false;
       }
 
+      // Employment type filter
+      if (selectedEmploymentTypes.length > 0 && !selectedEmploymentTypes.includes(job.employmentType)) {
+        return false;
+      }
+
+      // Work arrangement filter
+      if (selectedWorkArrangements.length > 0 && !selectedWorkArrangements.includes(job.workArrangement)) {
+        return false;
+      }
+
+      // Salary filter
+      const minSalary = debouncedSalaryMin ? parseInt(debouncedSalaryMin) : null;
+      const maxSalary = debouncedSalaryMax ? parseInt(debouncedSalaryMax) : null;
+
+      if (minSalary || maxSalary) {
+        const annualSalary = getAnnualSalary(job);
+
+        if (annualSalary === null) {
+          // Job has no salary - only show if showNoSalary is checked
+          if (!showNoSalary) return false;
+        } else {
+          if (minSalary && annualSalary < minSalary) return false;
+          if (maxSalary && annualSalary > maxSalary) return false;
+        }
+      }
+
       return true;
     });
-  }, [debouncedSearch, selectedLocation, selectedCategories]);
+
+    // Sort results
+    result.sort((a, b) => {
+      switch (sortBy) {
+        case "newest":
+          return new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime();
+        case "oldest":
+          return new Date(a.postedAt).getTime() - new Date(b.postedAt).getTime();
+        case "salary-high": {
+          const salaryA = getAnnualSalary(a) || 0;
+          const salaryB = getAnnualSalary(b) || 0;
+          return salaryB - salaryA;
+        }
+        case "salary-low": {
+          const salaryA = getAnnualSalary(a) || Infinity;
+          const salaryB = getAnnualSalary(b) || Infinity;
+          return salaryA - salaryB;
+        }
+        default:
+          return 0;
+      }
+    });
+
+    return result;
+  }, [
+    debouncedSearch,
+    selectedLocation,
+    selectedCategories,
+    selectedEmploymentTypes,
+    selectedWorkArrangements,
+    debouncedSalaryMin,
+    debouncedSalaryMax,
+    showNoSalary,
+    sortBy,
+  ]);
 
   // Count jobs per category
   const categoryJobCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     JOB_CATEGORIES.forEach((cat) => {
       counts[cat] = mockJobs.filter((job) => {
-        // Apply current search and location filters but not category filter
         if (debouncedSearch.trim()) {
           const query = debouncedSearch.toLowerCase();
           const searchableText = [job.title, job.description, job.church.name]
@@ -121,14 +251,40 @@ export default function JobsContent() {
     );
   }, []);
 
+  const handleEmploymentTypeToggle = useCallback((type: EmploymentType) => {
+    setSelectedEmploymentTypes((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+    );
+  }, []);
+
+  const handleWorkArrangementToggle = useCallback((arrangement: WorkArrangement) => {
+    setSelectedWorkArrangements((prev) =>
+      prev.includes(arrangement)
+        ? prev.filter((a) => a !== arrangement)
+        : [...prev, arrangement]
+    );
+  }, []);
+
   const clearAllFilters = useCallback(() => {
     setSearchQuery("");
     setSelectedLocation("");
     setSelectedCategories([]);
+    setSelectedEmploymentTypes([]);
+    setSelectedWorkArrangements([]);
+    setSalaryMin("");
+    setSalaryMax("");
+    setShowNoSalary(false);
+    setSortBy("newest");
   }, []);
 
   const hasActiveFilters =
-    debouncedSearch || selectedLocation || selectedCategories.length > 0;
+    debouncedSearch ||
+    selectedLocation ||
+    selectedCategories.length > 0 ||
+    selectedEmploymentTypes.length > 0 ||
+    selectedWorkArrangements.length > 0 ||
+    salaryMin ||
+    salaryMax;
 
   return (
     <>
@@ -159,8 +315,9 @@ export default function JobsContent() {
           />
         </div>
 
-        {/* Location filter */}
+        {/* Filter row */}
         <div className="flex flex-wrap gap-4 items-center">
+          {/* Location filter */}
           <div className="flex items-center gap-2">
             <label htmlFor="location" className="text-sm font-medium text-gray-700">
               Location:
@@ -175,6 +332,25 @@ export default function JobsContent() {
               {locations.map((location) => (
                 <option key={location} value={location}>
                   {location}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Sort dropdown */}
+          <div className="flex items-center gap-2">
+            <label htmlFor="sort" className="text-sm font-medium text-gray-700">
+              Sort:
+            </label>
+            <select
+              id="sort"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortOption)}
+              className="block w-44 px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+            >
+              {SORT_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
                 </option>
               ))}
             </select>
@@ -201,6 +377,95 @@ export default function JobsContent() {
               Clear all filters
             </button>
           )}
+        </div>
+
+        {/* Employment type filter */}
+        <div>
+          <label className="text-sm font-medium text-gray-700 mb-2 block">
+            Employment Type:
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {EMPLOYMENT_TYPES.map((type) => {
+              const isSelected = selectedEmploymentTypes.includes(type);
+              return (
+                <button
+                  key={type}
+                  onClick={() => handleEmploymentTypeToggle(type)}
+                  className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    isSelected
+                      ? "bg-primary-600 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  {type}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Work arrangement filter */}
+        <div>
+          <label className="text-sm font-medium text-gray-700 mb-2 block">
+            Work Arrangement:
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {WORK_ARRANGEMENTS.map((arrangement) => {
+              const isSelected = selectedWorkArrangements.includes(arrangement);
+              return (
+                <button
+                  key={arrangement}
+                  onClick={() => handleWorkArrangementToggle(arrangement)}
+                  className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    isSelected
+                      ? "bg-primary-600 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  {arrangement}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Salary range filter */}
+        <div>
+          <label className="text-sm font-medium text-gray-700 mb-2 block">
+            Salary Range (Annual):
+          </label>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-gray-500">$</span>
+              <input
+                type="number"
+                placeholder="Min"
+                value={salaryMin}
+                onChange={(e) => setSalaryMin(e.target.value)}
+                className="w-28 px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+              />
+            </div>
+            <span className="text-gray-500">to</span>
+            <div className="flex items-center gap-2">
+              <span className="text-gray-500">$</span>
+              <input
+                type="number"
+                placeholder="Max"
+                value={salaryMax}
+                onChange={(e) => setSalaryMax(e.target.value)}
+                className="w-28 px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+              />
+            </div>
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={showNoSalary}
+                onChange={(e) => setShowNoSalary(e.target.checked)}
+                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              />
+              Show jobs without salary
+            </label>
+          </div>
         </div>
 
         {/* Category filter */}
@@ -240,14 +505,14 @@ export default function JobsContent() {
       {/* Results count */}
       <div className="mb-4">
         <p className="text-sm text-gray-600">
-          Showing {filteredJobs.length} of {mockJobs.length} jobs
+          Showing {filteredAndSortedJobs.length} of {mockJobs.length} jobs
         </p>
       </div>
 
       {/* Job listings grid */}
-      {filteredJobs.length > 0 ? (
+      {filteredAndSortedJobs.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredJobs.map((job) => (
+          {filteredAndSortedJobs.map((job) => (
             <JobCard key={job.id} job={job} />
           ))}
         </div>

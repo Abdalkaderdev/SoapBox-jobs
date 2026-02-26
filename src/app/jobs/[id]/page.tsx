@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { mockJobs } from "@/lib/mock-data";
 import { Job } from "@/types/job";
+import JobDetailSidebar from "@/components/JobDetailSidebar";
 
 interface JobDetailPageProps {
   params: Promise<{ id: string }>;
@@ -237,31 +238,7 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
 
         {/* Sidebar */}
         <div className="mt-8 lg:mt-0">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky top-8">
-            {/* Church info */}
-            <div className="text-center mb-6">
-              <div className="w-20 h-20 bg-primary-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-                <span className="text-3xl font-bold text-primary-600">
-                  {job.church.name.charAt(0)}
-                </span>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">{job.church.name}</h3>
-              <p className="text-sm text-gray-500 mt-1">{job.location}</p>
-            </div>
-
-            {/* Apply button */}
-            <button className="w-full bg-primary-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-primary-700 transition-colors mb-4">
-              Apply Now
-            </button>
-
-            <button className="w-full bg-white text-primary-600 py-3 px-4 rounded-lg font-medium border border-primary-600 hover:bg-primary-50 transition-colors">
-              Save Job
-            </button>
-
-            <p className="text-xs text-gray-500 text-center mt-4">
-              By applying, you agree to share your profile with {job.church.name}
-            </p>
-          </div>
+          <JobDetailSidebar job={job} />
         </div>
       </div>
     </div>

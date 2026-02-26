@@ -1,0 +1,29 @@
+# =============================================================================
+# SoapBox Jobs - Kubernetes Ingress
+# =============================================================================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: soapbox-jobs
+  namespace: soapbox
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+spec:
+  tls:
+    - hosts:
+        - jobs.soapboxsuperapp.com
+      secretName: soapbox-jobs-tls
+  rules:
+    - host: jobs.soapboxsuperapp.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: soapbox-jobs
+                port:
+                  number: 80

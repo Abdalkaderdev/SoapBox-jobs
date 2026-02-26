@@ -1,0 +1,68 @@
+# =============================================================================
+# SoapBox Jobs - Kubernetes Deployment
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: soapbox-jobs
+  namespace: soapbox
+  labels:
+    app: soapbox-jobs
+    app.kubernetes.io/name: soapbox-jobs
+    app.kubernetes.io/component: web
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: soapbox-jobs
+  template:
+    metadata:
+      labels:
+        app: soapbox-jobs
+        app.kubernetes.io/name: soapbox-jobs
+        app.kubernetes.io/component: web
+    spec:
+      containers:
+        - name: soapbox-jobs
+          image: registry.digitalocean.com/soapbox-registry/soapbox-jobs:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+              protocol: TCP
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: "3000"
+            # Database URL from secret
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: soapbox-jobs-secrets
+                  key: database-url
+                  optional: true
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+      imagePullSecrets:
+        - name: soapbox-registry
