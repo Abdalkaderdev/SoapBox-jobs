@@ -68,73 +68,73 @@ Branch: `feature/mvp`
 
 ### US-007: Implement save/bookmark jobs functionality
 
-- [ ] Add `types/user.ts` with User interface (id, email, name, savedJobs: string[])
-- [ ] Create `lib/storage.ts` with localStorage helpers for persisting saved jobs
-- [ ] Add heart/bookmark icon button to JobCard component
-- [ ] Implement toggle save/unsave functionality on click
-- [ ] Show filled heart icon when job is saved, outline when not
-- [ ] Add save button to job detail page sidebar
-- [ ] Create `/jobs/saved` page that lists all saved jobs
-- [ ] Add "Saved Jobs" link to header navigation
-- [ ] Show empty state on saved jobs page when no jobs saved
-- [ ] `npm run build` succeeds without errors
+- [x] Add `types/user.ts` with User interface (id, email, name, savedJobs: string[])
+- [x] Create `lib/storage.ts` with localStorage helpers for persisting saved jobs
+- [x] Add heart/bookmark icon button to JobCard component
+- [x] Implement toggle save/unsave functionality on click
+- [x] Show filled heart icon when job is saved, outline when not
+- [x] Add save button to job detail page sidebar
+- [x] Create `/jobs/saved` page that lists all saved jobs
+- [x] Add "Saved Jobs" link to header navigation
+- [x] Show empty state on saved jobs page when no jobs saved
+- [x] `npm run build` succeeds without errors
 
 ### US-008: Add employment type filter
 
-- [ ] Add employment type filter (checkboxes or pills) to jobs page
-- [ ] Options: Full-time, Part-time, Contract, Volunteer, Internship
-- [ ] Multiple employment types can be selected
-- [ ] Filter works in combination with existing filters
-- [ ] URL updates with employment type params
-- [ ] `npm run build` succeeds without errors
+- [x] Add employment type filter (checkboxes or pills) to jobs page
+- [x] Options: Full-time, Part-time, Contract, Volunteer, Internship
+- [x] Multiple employment types can be selected
+- [x] Filter works in combination with existing filters
+- [x] URL updates with employment type params
+- [x] `npm run build` succeeds without errors
 
 ### US-009: Add work arrangement filter
 
-- [ ] Add work arrangement filter to jobs page
-- [ ] Options: On-site, Remote, Hybrid, Flexible
-- [ ] Multiple arrangements can be selected
-- [ ] Filter works in combination with existing filters
-- [ ] URL updates with work arrangement params
-- [ ] `npm run build` succeeds without errors
+- [x] Add work arrangement filter to jobs page
+- [x] Options: On-site, Remote, Hybrid, Flexible
+- [x] Multiple arrangements can be selected
+- [x] Filter works in combination with existing filters
+- [x] URL updates with work arrangement params
+- [x] `npm run build` succeeds without errors
 
 ### US-010: Add salary range filter
 
-- [ ] Add salary range filter with min/max inputs
-- [ ] Include "Show jobs without salary" checkbox
-- [ ] Filter jobs by annual salary (convert hourly to annual for comparison)
-- [ ] Filter works in combination with existing filters
-- [ ] URL updates with salary params
-- [ ] `npm run build` succeeds without errors
+- [x] Add salary range filter with min/max inputs
+- [x] Include "Show jobs without salary" checkbox
+- [x] Filter jobs by annual salary (convert hourly to annual for comparison)
+- [x] Filter works in combination with existing filters
+- [x] URL updates with salary params
+- [x] `npm run build` succeeds without errors
 
 ### US-011: Add sort functionality
 
-- [ ] Add sort dropdown to jobs page
-- [ ] Sort options: Newest first, Oldest first, Salary (high to low), Salary (low to high)
-- [ ] Default sort is Newest first
-- [ ] Sort persists in URL params
-- [ ] `npm run build` succeeds without errors
+- [x] Add sort dropdown to jobs page
+- [x] Sort options: Newest first, Oldest first, Salary (high to low), Salary (low to high)
+- [x] Default sort is Newest first
+- [x] Sort persists in URL params
+- [x] `npm run build` succeeds without errors
 
 ### US-012: Set up authentication context and mock auth
 
-- [ ] Install and configure next-auth or create custom auth context
-- [ ] Create `contexts/AuthContext.tsx` with user state and login/logout functions
-- [ ] Create mock users in `lib/mock-users.ts` (job seekers and church admins)
-- [ ] Create `/auth/signin` page with email/password form
-- [ ] Create `/auth/signup` page with registration form
-- [ ] Update header to show user name when logged in
-- [ ] Add Sign Out button to header when logged in
-- [ ] Store auth state in localStorage for persistence
-- [ ] `npm run build` succeeds without errors
+- [x] Install and configure next-auth or create custom auth context
+- [x] Create `contexts/AuthContext.tsx` with user state and login/logout functions
+- [x] Create mock users in `lib/mock-users.ts` (job seekers and church admins)
+- [x] Create `/auth/signin` page with email/password form
+- [x] Create `/auth/signup` page with registration form
+- [x] Update header to show user name when logged in
+- [x] Add Sign Out button to header when logged in
+- [x] Store auth state in localStorage for persistence
+- [x] `npm run build` succeeds without errors
 
 ### US-013: Create user profile page
 
-- [ ] Create `/profile` page (protected route, redirect to signin if not logged in)
-- [ ] Display user info: name, email, profile photo placeholder
-- [ ] Add "Ministry Statement" textarea field (max 2000 chars)
-- [ ] Add form to update profile information
-- [ ] Save profile changes to localStorage
-- [ ] Show success message on save
-- [ ] `npm run build` succeeds without errors
+- [x] Create `/profile` page (protected route, redirect to signin if not logged in)
+- [x] Display user info: name, email, profile photo placeholder
+- [x] Add "Ministry Statement" textarea field (max 2000 chars)
+- [x] Add form to update profile information
+- [x] Save profile changes to localStorage
+- [x] Show success message on save
+- [x] `npm run build` succeeds without errors
 
 ### US-014: Implement job application flow
 
