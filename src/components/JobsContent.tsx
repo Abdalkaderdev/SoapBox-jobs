@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import JobCard from "@/components/JobCard";
 import { mockJobs } from "@/lib/mock-data";
@@ -13,6 +13,10 @@ import {
   WorkArrangement,
   Job,
 } from "@/types/job";
+import { useAuth } from "@/contexts/AuthContext";
+import { createAlert } from "@/lib/alerts";
+import { JobAlert } from "@/types/alert";
+import { trackSearch, trackFilterUse, trackPageView } from "@/lib/analytics";
 
 type SortOption = "newest" | "oldest" | "salary-high" | "salary-low";
 
@@ -53,6 +57,13 @@ function getAnnualSalary(job: Job): number | null {
 export default function JobsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user, isAuthenticated } = useAuth();
+
+  // Modal state for save search
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [alertName, setAlertName] = useState("");
+  const [alertFrequency, setAlertFrequency] = useState<JobAlert["frequency"]>("daily");
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Initialize state from URL params
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
@@ -94,6 +105,18 @@ export default function JobsContent() {
   const debouncedSearch = useDebounce(searchQuery, 300);
   const debouncedSalaryMin = useDebounce(salaryMin, 300);
   const debouncedSalaryMax = useDebounce(salaryMax, 300);
+
+  // Track page view on mount
+  const hasTrackedPageView = useRef(false);
+  useEffect(() => {
+    if (!hasTrackedPageView.current) {
+      trackPageView("/jobs");
+      hasTrackedPageView.current = true;
+    }
+  }, []);
+
+  // Track search queries (debounced) - moved after filteredAndSortedJobs definition
+  const lastTrackedSearch = useRef<string>("");
 
   // Update URL when filters change
   useEffect(() => {
@@ -210,6 +233,14 @@ export default function JobsContent() {
     sortBy,
   ]);
 
+  // Track search queries (debounced)
+  useEffect(() => {
+    if (debouncedSearch && debouncedSearch !== lastTrackedSearch.current) {
+      trackSearch(debouncedSearch, filteredAndSortedJobs.length);
+      lastTrackedSearch.current = debouncedSearch;
+    }
+  }, [debouncedSearch, filteredAndSortedJobs.length]);
+
   // Count jobs per category
   const categoryJobCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -238,31 +269,47 @@ export default function JobsContent() {
 
   const handleLocationChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
-      setSelectedLocation(e.target.value);
+      const value = e.target.value;
+      setSelectedLocation(value);
+      if (value) {
+        trackFilterUse("location", value);
+      }
     },
     []
   );
 
   const handleCategoryToggle = useCallback((category: JobCategory) => {
-    setSelectedCategories((prev) =>
-      prev.includes(category)
+    setSelectedCategories((prev) => {
+      const isRemoving = prev.includes(category);
+      if (!isRemoving) {
+        trackFilterUse("category", category);
+      }
+      return isRemoving
         ? prev.filter((c) => c !== category)
-        : [...prev, category]
-    );
+        : [...prev, category];
+    });
   }, []);
 
   const handleEmploymentTypeToggle = useCallback((type: EmploymentType) => {
-    setSelectedEmploymentTypes((prev) =>
-      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
-    );
+    setSelectedEmploymentTypes((prev) => {
+      const isRemoving = prev.includes(type);
+      if (!isRemoving) {
+        trackFilterUse("employmentType", type);
+      }
+      return isRemoving ? prev.filter((t) => t !== type) : [...prev, type];
+    });
   }, []);
 
   const handleWorkArrangementToggle = useCallback((arrangement: WorkArrangement) => {
-    setSelectedWorkArrangements((prev) =>
-      prev.includes(arrangement)
+    setSelectedWorkArrangements((prev) => {
+      const isRemoving = prev.includes(arrangement);
+      if (!isRemoving) {
+        trackFilterUse("workArrangement", arrangement);
+      }
+      return isRemoving
         ? prev.filter((a) => a !== arrangement)
-        : [...prev, arrangement]
-    );
+        : [...prev, arrangement];
+    });
   }, []);
 
   const clearAllFilters = useCallback(() => {
@@ -285,6 +332,55 @@ export default function JobsContent() {
     selectedWorkArrangements.length > 0 ||
     salaryMin ||
     salaryMax;
+
+  const handleOpenSaveModal = useCallback(() => {
+    if (!isAuthenticated) {
+      router.push("/auth/signin");
+      return;
+    }
+    // Generate default name based on filters
+    const nameParts: string[] = [];
+    if (debouncedSearch) nameParts.push(`"${debouncedSearch}"`);
+    if (selectedLocation) nameParts.push(selectedLocation);
+    if (selectedCategories.length > 0) nameParts.push(selectedCategories.join(", "));
+    setAlertName(nameParts.length > 0 ? nameParts.join(" - ") : "My Job Alert");
+    setShowSaveModal(true);
+    setSaveSuccess(false);
+  }, [isAuthenticated, router, debouncedSearch, selectedLocation, selectedCategories]);
+
+  const handleSaveAlert = useCallback(() => {
+    if (!user || !alertName.trim()) return;
+
+    createAlert({
+      userId: user.id,
+      name: alertName.trim(),
+      criteria: {
+        search: debouncedSearch || undefined,
+        location: selectedLocation || undefined,
+        categories: selectedCategories.length > 0 ? selectedCategories : undefined,
+        employmentTypes: selectedEmploymentTypes.length > 0 ? selectedEmploymentTypes : undefined,
+        workArrangements: selectedWorkArrangements.length > 0 ? selectedWorkArrangements : undefined,
+      },
+      frequency: alertFrequency,
+      isActive: true,
+    });
+
+    setSaveSuccess(true);
+    setTimeout(() => {
+      setShowSaveModal(false);
+      setAlertName("");
+      setSaveSuccess(false);
+    }, 1500);
+  }, [
+    user,
+    alertName,
+    alertFrequency,
+    debouncedSearch,
+    selectedLocation,
+    selectedCategories,
+    selectedEmploymentTypes,
+    selectedWorkArrangements,
+  ]);
 
   return (
     <>
@@ -357,25 +453,46 @@ export default function JobsContent() {
           </div>
 
           {hasActiveFilters && (
-            <button
-              onClick={clearAllFilters}
-              className="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
-            >
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
+            <>
+              <button
+                onClick={clearAllFilters}
+                className="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-              Clear all filters
-            </button>
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+                Clear all filters
+              </button>
+              <button
+                onClick={handleOpenSaveModal}
+                className="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1 ml-2"
+              >
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                  />
+                </svg>
+                Save this search
+              </button>
+            </>
           )}
         </div>
 
@@ -541,6 +658,175 @@ export default function JobsContent() {
           >
             Clear all filters
           </button>
+        </div>
+      )}
+
+      {/* Save Search Modal */}
+      {showSaveModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4">
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+              onClick={() => setShowSaveModal(false)}
+            />
+
+            {/* Modal */}
+            <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+              {saveSuccess ? (
+                <div className="text-center py-4">
+                  <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                    <svg
+                      className="w-6 h-6 text-green-600"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">Alert Saved!</h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    You&apos;ll be notified when new jobs match your search.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      Save this search
+                    </h2>
+                    <button
+                      onClick={() => setShowSaveModal(false)}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      <svg
+                        className="h-6 w-6"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+
+                  <p className="text-sm text-gray-600 mb-4">
+                    Get notified when new jobs match your current filters.
+                  </p>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label
+                        htmlFor="alertName"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Alert Name
+                      </label>
+                      <input
+                        type="text"
+                        id="alertName"
+                        value={alertName}
+                        onChange={(e) => setAlertName(e.target.value)}
+                        placeholder="e.g., Worship Leader jobs in Austin"
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="alertFrequency"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Notification Frequency
+                      </label>
+                      <select
+                        id="alertFrequency"
+                        value={alertFrequency}
+                        onChange={(e) =>
+                          setAlertFrequency(e.target.value as JobAlert["frequency"])
+                        }
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                      >
+                        <option value="immediate">Immediately</option>
+                        <option value="daily">Daily digest</option>
+                        <option value="weekly">Weekly digest</option>
+                      </select>
+                    </div>
+
+                    {/* Current filters summary */}
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <p className="text-sm font-medium text-gray-700 mb-2">
+                        Current filters:
+                      </p>
+                      <div className="flex flex-wrap gap-1">
+                        {debouncedSearch && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-primary-100 text-primary-700">
+                            &quot;{debouncedSearch}&quot;
+                          </span>
+                        )}
+                        {selectedLocation && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-primary-100 text-primary-700">
+                            {selectedLocation}
+                          </span>
+                        )}
+                        {selectedCategories.map((cat) => (
+                          <span
+                            key={cat}
+                            className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-primary-100 text-primary-700"
+                          >
+                            {cat}
+                          </span>
+                        ))}
+                        {selectedEmploymentTypes.map((type) => (
+                          <span
+                            key={type}
+                            className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-primary-100 text-primary-700"
+                          >
+                            {type}
+                          </span>
+                        ))}
+                        {selectedWorkArrangements.map((arr) => (
+                          <span
+                            key={arr}
+                            className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-primary-100 text-primary-700"
+                          >
+                            {arr}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 flex gap-3">
+                    <button
+                      onClick={() => setShowSaveModal(false)}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSaveAlert}
+                      disabled={!alertName.trim()}
+                      className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Save Alert
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </>

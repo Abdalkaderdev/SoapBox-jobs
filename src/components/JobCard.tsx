@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Job } from "@/types/job";
 import { useSavedJobs } from "@/contexts/SavedJobsContext";
+import { trackJobClick } from "@/lib/analytics";
 
 interface JobCardProps {
   job: Job;
@@ -62,8 +63,12 @@ export default function JobCard({ job }: JobCardProps) {
     toggleSaveJob(job.id);
   };
 
+  const handleCardClick = () => {
+    trackJobClick(job.id, job.title);
+  };
+
   return (
-    <Link href={`/jobs/${job.id}`}>
+    <Link href={`/jobs/${job.id}`} onClick={handleCardClick}>
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-primary-200 transition-all duration-200 cursor-pointer h-full flex flex-col">
         <div className="flex-1">
           <div className="flex items-start justify-between mb-3">

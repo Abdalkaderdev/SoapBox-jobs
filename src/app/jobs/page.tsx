@@ -1,16 +1,39 @@
 import { Suspense } from "react";
 import JobsContent from "@/components/JobsContent";
+import { JobCardSkeletonGrid } from "@/components/JobCardSkeleton";
 
 function JobsLoading() {
   return (
     <div className="space-y-4">
+      {/* Search input skeleton */}
       <div className="h-12 bg-gray-200 rounded-lg animate-pulse" />
-      <div className="h-10 bg-gray-200 rounded-lg animate-pulse w-64" />
-      <div className="h-10 bg-gray-200 rounded-lg animate-pulse" />
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
-          <div key={i} className="h-64 bg-gray-200 rounded-lg animate-pulse" />
+
+      {/* Filter row skeleton */}
+      <div className="flex flex-wrap gap-4 items-center">
+        <div className="h-10 bg-gray-200 rounded-lg animate-pulse w-64" />
+        <div className="h-10 bg-gray-200 rounded-lg animate-pulse w-48" />
+      </div>
+
+      {/* Employment type filter skeleton */}
+      <div className="flex flex-wrap gap-2">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="h-8 bg-gray-200 rounded-full animate-pulse w-24" />
         ))}
+      </div>
+
+      {/* Category filter skeleton */}
+      <div className="flex flex-wrap gap-2">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div key={i} className="h-8 bg-gray-200 rounded-full animate-pulse w-28" />
+        ))}
+      </div>
+
+      {/* Results count skeleton */}
+      <div className="h-5 bg-gray-200 rounded animate-pulse w-40 mt-4" />
+
+      {/* Job cards grid skeleton */}
+      <div className="mt-4">
+        <JobCardSkeletonGrid count={6} />
       </div>
     </div>
   );

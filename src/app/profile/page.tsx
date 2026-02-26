@@ -3,6 +3,11 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import {
+  NotificationPreferences,
+  getPreferences,
+  savePreferences,
+} from "@/lib/notifications";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -13,6 +18,11 @@ export default function ProfilePage() {
   const [ministryStatement, setMinistryStatement] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
+
+  // Notification preferences state
+  const [notificationPrefs, setNotificationPrefs] = useState<NotificationPreferences | null>(null);
+  const [isSavingNotifications, setIsSavingNotifications] = useState(false);
+  const [notificationSaveMessage, setNotificationSaveMessage] = useState("");
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -25,6 +35,9 @@ export default function ProfilePage() {
       setName(user.name || "");
       setEmail(user.email || "");
       setMinistryStatement(user.ministryStatement || "");
+      // Load notification preferences
+      const prefs = getPreferences(user.id);
+      setNotificationPrefs(prefs);
     }
   }, [user]);
 
@@ -45,6 +58,53 @@ export default function ProfilePage() {
     setSaveMessage("Profile saved successfully!");
 
     setTimeout(() => setSaveMessage(""), 3000);
+  };
+
+  const handleNotificationPrefsChange = (
+    field: keyof Omit<NotificationPreferences, "userId">
+  ) => {
+    if (!notificationPrefs) return;
+
+    if (field === "frequency") {
+      // This is handled by the select onChange
+      return;
+    }
+
+    setNotificationPrefs({
+      ...notificationPrefs,
+      [field]: !notificationPrefs[field],
+    });
+  };
+
+  const handleFrequencyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    if (!notificationPrefs) return;
+
+    setNotificationPrefs({
+      ...notificationPrefs,
+      frequency: e.target.value as NotificationPreferences["frequency"],
+    });
+  };
+
+  const handleSaveNotificationPrefs = async () => {
+    if (!notificationPrefs || !user) return;
+
+    setIsSavingNotifications(true);
+    setNotificationSaveMessage("");
+
+    // Simulate network delay
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    savePreferences(user.id, {
+      applicationStatusChange: notificationPrefs.applicationStatusChange,
+      newMessage: notificationPrefs.newMessage,
+      jobAlerts: notificationPrefs.jobAlerts,
+      frequency: notificationPrefs.frequency,
+    });
+
+    setIsSavingNotifications(false);
+    setNotificationSaveMessage("Notification preferences saved!");
+
+    setTimeout(() => setNotificationSaveMessage(""), 3000);
   };
 
   if (isLoading) {
@@ -151,6 +211,104 @@ export default function ProfilePage() {
             </button>
           </div>
         </form>
+      </div>
+
+      {/* Notification Preferences Section */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-8">
+        <h2 className="text-xl font-semibold text-gray-900 mb-6">
+          Notification Preferences
+        </h2>
+
+        {notificationSaveMessage && (
+          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6">
+            {notificationSaveMessage}
+          </div>
+        )}
+
+        <div className="space-y-6">
+          {/* Email notification checkboxes */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium text-gray-700">
+              Email Notifications
+            </h3>
+
+            <div className="space-y-3">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={notificationPrefs?.applicationStatusChange ?? true}
+                  onChange={() =>
+                    handleNotificationPrefsChange("applicationStatusChange")
+                  }
+                  className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                />
+                <span className="text-sm text-gray-700">
+                  Email on application status change
+                </span>
+              </label>
+
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={notificationPrefs?.newMessage ?? true}
+                  onChange={() => handleNotificationPrefsChange("newMessage")}
+                  className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                />
+                <span className="text-sm text-gray-700">
+                  Email on new message
+                </span>
+              </label>
+
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={notificationPrefs?.jobAlerts ?? true}
+                  onChange={() => handleNotificationPrefsChange("jobAlerts")}
+                  className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                />
+                <span className="text-sm text-gray-700">Job alert emails</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Frequency dropdown */}
+          <div>
+            <label
+              htmlFor="frequency"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Email Frequency
+            </label>
+            <select
+              id="frequency"
+              value={notificationPrefs?.frequency ?? "immediate"}
+              onChange={handleFrequencyChange}
+              className="block w-full sm:w-64 px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900 bg-white"
+            >
+              <option value="immediate">Immediate</option>
+              <option value="daily">Daily digest</option>
+              <option value="weekly">Weekly digest</option>
+              <option value="never">Never</option>
+            </select>
+            <p className="mt-1 text-xs text-gray-500">
+              Choose how often you want to receive email notifications
+            </p>
+          </div>
+
+          {/* Save button */}
+          <div className="pt-4">
+            <button
+              type="button"
+              onClick={handleSaveNotificationPrefs}
+              disabled={isSavingNotifications}
+              className="w-full sm:w-auto px-6 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSavingNotifications
+                ? "Saving..."
+                : "Save Notification Preferences"}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

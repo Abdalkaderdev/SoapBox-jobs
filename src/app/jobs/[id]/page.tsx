@@ -1,11 +1,39 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { mockJobs } from "@/lib/mock-data";
 import { Job } from "@/types/job";
 import JobDetailSidebar from "@/components/JobDetailSidebar";
+import SimilarJobs from "@/components/SimilarJobs";
+import PageTracker from "@/components/PageTracker";
 
 interface JobDetailPageProps {
   params: Promise<{ id: string }>;
+}
+
+export async function generateMetadata({ params }: JobDetailPageProps): Promise<Metadata> {
+  const { id } = await params;
+  const job = mockJobs.find((j) => j.id === id);
+
+  if (!job) {
+    return {
+      title: "Job Not Found - SoapBox Jobs",
+      description: "The requested job posting could not be found.",
+    };
+  }
+
+  const title = `${job.title} at ${job.church.name} - SoapBox Jobs`;
+  const description = `${job.employmentType} ${job.category} position at ${job.church.name} in ${job.location}. ${job.description.substring(0, 150)}...`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+    },
+  };
 }
 
 function formatSalary(salary: Job["salary"]): string {
@@ -68,6 +96,7 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <PageTracker page={`/jobs/${job.id}`} />
       {/* Back link */}
       <Link
         href="/jobs"
@@ -107,7 +136,12 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
                 </span>
               </div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">{job.title}</h1>
-              <p className="text-lg text-primary-600 font-medium">{job.church.name}</p>
+              <Link
+                href={`/churches/${job.church.id}`}
+                className="text-lg text-primary-600 font-medium hover:text-primary-700 hover:underline transition-colors"
+              >
+                {job.church.name}
+              </Link>
             </div>
 
             {/* Key details */}
@@ -234,6 +268,9 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
               </div>
             )}
           </div>
+
+          {/* Similar Jobs Section */}
+          <SimilarJobs currentJob={job} />
         </div>
 
         {/* Sidebar */}

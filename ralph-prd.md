@@ -138,168 +138,168 @@ Branch: `feature/mvp`
 
 ### US-014: Implement job application flow
 
-- [ ] Add `types/application.ts` with Application interface (id, jobId, userId, status, coverLetter, resumeUrl, appliedAt)
-- [ ] Create `lib/applications.ts` for managing applications in localStorage
-- [ ] Update "Apply Now" button on job detail page to open application modal
-- [ ] Create application modal with cover letter textarea
-- [ ] Add file input for resume upload (store filename, mock upload)
-- [ ] Submit application saves to localStorage
-- [ ] Show success message after applying
-- [ ] Disable Apply button if already applied
-- [ ] `npm run build` succeeds without errors
+- [x] Add `types/application.ts` with Application interface (id, jobId, userId, status, coverLetter, resumeUrl, appliedAt)
+- [x] Create `lib/applications.ts` for managing applications in localStorage
+- [x] Update "Apply Now" button on job detail page to open application modal
+- [x] Create application modal with cover letter textarea
+- [x] Add file input for resume upload (store filename, mock upload)
+- [x] Submit application saves to localStorage
+- [x] Show success message after applying
+- [x] Disable Apply button if already applied
+- [x] `npm run build` succeeds without errors
 
 ### US-015: Create applications tracking page for job seekers
 
-- [ ] Create `/applications` page showing user's submitted applications
-- [ ] Display application cards with: job title, church name, status, applied date
-- [ ] Application statuses: Submitted, Under Review, Interview Requested, Offer Extended, Hired, Not Selected, Withdrawn
-- [ ] Add status badge with appropriate colors
-- [ ] Add "Withdraw Application" button for pending applications
-- [ ] Show empty state when no applications
-- [ ] Add "My Applications" link to header navigation (when logged in)
-- [ ] `npm run build` succeeds without errors
+- [x] Create `/applications` page showing user's submitted applications
+- [x] Display application cards with: job title, church name, status, applied date
+- [x] Application statuses: Submitted, Under Review, Interview Requested, Offer Extended, Hired, Not Selected, Withdrawn
+- [x] Add status badge with appropriate colors
+- [x] Add "Withdraw Application" button for pending applications
+- [x] Show empty state when no applications
+- [x] Add "My Applications" link to header navigation (when logged in)
+- [x] `npm run build` succeeds without errors
 
 ### US-016: Implement application messaging
 
-- [ ] Add `types/message.ts` with Message interface (id, applicationId, senderId, content, createdAt, isRead)
-- [ ] Create messages section on application detail page
-- [ ] Display message thread with sender name and timestamp
-- [ ] Add message input form at bottom of thread
-- [ ] New messages saved to localStorage
-- [ ] Show unread message indicator on applications list
-- [ ] `npm run build` succeeds without errors
+- [x] Add `types/message.ts` with Message interface (id, applicationId, senderId, content, createdAt, isRead)
+- [x] Create messages section on application detail page
+- [x] Display message thread with sender name and timestamp
+- [x] Add message input form at bottom of thread
+- [x] New messages saved to localStorage
+- [x] Show unread message indicator on applications list
+- [x] `npm run build` succeeds without errors
 
 ### US-017: Create church admin dashboard
 
-- [ ] Create `/admin` route group for church admin pages
-- [ ] Create `/admin/dashboard` page with overview stats
-- [ ] Display: total jobs posted, active listings, total applications, recent applications
-- [ ] Create mock data for church admin user with churchId
-- [ ] Protect admin routes - redirect non-admins to home
-- [ ] Add "Church Admin" link to header for admin users
-- [ ] `npm run build` succeeds without errors
+- [x] Create `/admin` route group for church admin pages
+- [x] Create `/admin/dashboard` page with overview stats
+- [x] Display: total jobs posted, active listings, total applications, recent applications
+- [x] Create mock data for church admin user with churchId
+- [x] Protect admin routes - redirect non-admins to home
+- [x] Add "Church Admin" link to header for admin users
+- [x] `npm run build` succeeds without errors
 
 ### US-018: Implement job posting form for church admins
 
-- [ ] Create `/admin/jobs/new` page with job posting form
-- [ ] Form fields: title, category (dropdown), employment type, work arrangement, location, salary min/max, description, qualifications, responsibilities
-- [ ] Add rich text editor or textarea for description fields
-- [ ] Form validation for required fields
-- [ ] Preview button to see how job will look
-- [ ] Submit saves job to mock data (localStorage)
-- [ ] Redirect to job listings after successful post
-- [ ] `npm run build` succeeds without errors
+- [x] Create `/admin/jobs/new` page with job posting form
+- [x] Form fields: title, category (dropdown), employment type, work arrangement, location, salary min/max, description, qualifications, responsibilities
+- [x] Add rich text editor or textarea for description fields
+- [x] Form validation for required fields
+- [x] Preview button to see how job will look
+- [x] Submit saves job to mock data (localStorage)
+- [x] Redirect to job listings after successful post
+- [x] `npm run build` succeeds without errors
 
 ### US-019: Create church admin job listings management
 
-- [ ] Create `/admin/jobs` page listing church's jobs
-- [ ] Display job cards with: title, status, applications count, posted date
-- [ ] Job statuses: Draft, Active, Closed, Filled
-- [ ] Add "Edit" button linking to edit page
-- [ ] Add "Close Position" / "Mark as Filled" actions
-- [ ] Add "Create New Job" button
-- [ ] Filter by status
-- [ ] `npm run build` succeeds without errors
+- [x] Create `/admin/jobs` page listing church's jobs
+- [x] Display job cards with: title, status, applications count, posted date
+- [x] Job statuses: Draft, Active, Closed, Filled
+- [x] Add "Edit" button linking to edit page
+- [x] Add "Close Position" / "Mark as Filled" actions
+- [x] Add "Create New Job" button
+- [x] Filter by status
+- [x] `npm run build` succeeds without errors
 
 ### US-020: Implement job editing for church admins
 
-- [ ] Create `/admin/jobs/[id]/edit` page
-- [ ] Pre-populate form with existing job data
-- [ ] Allow editing all fields except id
-- [ ] Save updates to localStorage
-- [ ] Show success message on save
-- [ ] Add "Delete Job" button with confirmation
-- [ ] `npm run build` succeeds without errors
+- [x] Create `/admin/jobs/[id]/edit` page
+- [x] Pre-populate form with existing job data
+- [x] Allow editing all fields except id
+- [x] Save updates to localStorage
+- [x] Show success message on save
+- [x] Add "Delete Job" button with confirmation
+- [x] `npm run build` succeeds without errors
 
 ### US-021: Create applications review page for church admins
 
-- [ ] Create `/admin/jobs/[id]/applications` page
-- [ ] List all applications for the job
-- [ ] Display: applicant name, applied date, status, rating
-- [ ] Add status dropdown to update application status
-- [ ] Add 1-5 star rating system
-- [ ] Add private notes textarea for each application
-- [ ] Click applicant to view full application details
-- [ ] `npm run build` succeeds without errors
+- [x] Create `/admin/jobs/[id]/applications` page
+- [x] List all applications for the job
+- [x] Display: applicant name, applied date, status, rating
+- [x] Add status dropdown to update application status
+- [x] Add 1-5 star rating system
+- [x] Add private notes textarea for each application
+- [x] Click applicant to view full application details
+- [x] `npm run build` succeeds without errors
 
 ### US-022: Implement applicant detail view for church admins
 
-- [ ] Create `/admin/applications/[id]` page
-- [ ] Display applicant profile info
-- [ ] Show cover letter and resume link
-- [ ] Display status history with timestamps
-- [ ] Add messaging section (same as job seeker view)
-- [ ] Add quick actions: Update status, Add note, Send message
-- [ ] `npm run build` succeeds without errors
+- [x] Create `/admin/applications/[id]` page
+- [x] Display applicant profile info
+- [x] Show cover letter and resume link
+- [x] Display status history with timestamps
+- [x] Add messaging section (same as job seeker view)
+- [x] Add quick actions: Update status, Add note, Send message
+- [x] `npm run build` succeeds without errors
 
 ### US-023: Create church profile management
 
-- [ ] Create `/admin/church` page for church profile
-- [ ] Display and edit: church name, denomination, size, location, description
-- [ ] Add logo upload (mock, store URL)
-- [ ] Add "About our team" section
-- [ ] Add "What we offer" benefits section
-- [ ] Preview how profile appears to job seekers
-- [ ] Save changes to localStorage
-- [ ] `npm run build` succeeds without errors
+- [x] Create `/admin/church` page for church profile
+- [x] Display and edit: church name, denomination, size, location, description
+- [x] Add logo upload (mock, store URL)
+- [x] Add "About our team" section
+- [x] Add "What we offer" benefits section
+- [x] Preview how profile appears to job seekers
+- [x] Save changes to localStorage
+- [x] `npm run build` succeeds without errors
 
 ### US-024: Add job alerts for job seekers
 
-- [ ] Add `types/alert.ts` with JobAlert interface (id, userId, name, criteria, frequency, isActive)
-- [ ] Create "Save this search" button on jobs page when filters are active
-- [ ] Create `/alerts` page listing saved job alerts
-- [ ] Display alert name, criteria summary, frequency
-- [ ] Add toggle to enable/disable alerts
-- [ ] Add delete alert button
-- [ ] Show empty state when no alerts
-- [ ] `npm run build` succeeds without errors
+- [x] Add `types/alert.ts` with JobAlert interface (id, userId, name, criteria, frequency, isActive)
+- [x] Create "Save this search" button on jobs page when filters are active
+- [x] Create `/alerts` page listing saved job alerts
+- [x] Display alert name, criteria summary, frequency
+- [x] Add toggle to enable/disable alerts
+- [x] Add delete alert button
+- [x] Show empty state when no alerts
+- [x] `npm run build` succeeds without errors
 
 ### US-025: Implement share job functionality
 
-- [ ] Add share button to job detail page
-- [ ] Create share modal with options: Copy link, Email, LinkedIn, Facebook, Twitter
-- [ ] Copy link button copies job URL to clipboard
-- [ ] Show "Link copied!" confirmation
-- [ ] Social share buttons open share dialogs with pre-filled content
-- [ ] `npm run build` succeeds without errors
+- [x] Add share button to job detail page
+- [x] Create share modal with options: Copy link, Email, LinkedIn, Facebook, Twitter
+- [x] Copy link button copies job URL to clipboard
+- [x] Show "Link copied!" confirmation
+- [x] Social share buttons open share dialogs with pre-filled content
+- [x] `npm run build` succeeds without errors
 
 ### US-026: Add report job functionality
 
-- [ ] Add "Report this listing" link to job detail page
-- [ ] Create report modal with reason dropdown and details textarea
-- [ ] Reasons: Spam, Inappropriate content, Scam/fraud, Incorrect information, Other
-- [ ] Submit saves report to localStorage
-- [ ] Show confirmation message after reporting
-- [ ] Prevent duplicate reports from same user
-- [ ] `npm run build` succeeds without errors
+- [x] Add "Report this listing" link to job detail page
+- [x] Create report modal with reason dropdown and details textarea
+- [x] Reasons: Spam, Inappropriate content, Scam/fraud, Incorrect information, Other
+- [x] Submit saves report to localStorage
+- [x] Show confirmation message after reporting
+- [x] Prevent duplicate reports from same user
+- [x] `npm run build` succeeds without errors
 
 ### US-027: Implement similar jobs feature
 
-- [ ] Add "Similar Jobs" section to job detail page
-- [ ] Find jobs with same category or location
-- [ ] Display 3-4 similar job cards
-- [ ] Exclude current job from results
-- [ ] Link to job detail pages
-- [ ] `npm run build` succeeds without errors
+- [x] Add "Similar Jobs" section to job detail page
+- [x] Find jobs with same category or location
+- [x] Display 3-4 similar job cards
+- [x] Exclude current job from results
+- [x] Link to job detail pages
+- [x] `npm run build` succeeds without errors
 
 ### US-028: Add church profile page for job seekers
 
-- [ ] Create `/churches/[id]` page showing church profile
-- [ ] Display: name, logo, denomination, size, location, description
-- [ ] Show "About our team" and benefits sections
-- [ ] List all active jobs from this church
-- [ ] Add link from job detail page to church profile
-- [ ] `npm run build` succeeds without errors
+- [x] Create `/churches/[id]` page showing church profile
+- [x] Display: name, logo, denomination, size, location, description
+- [x] Show "About our team" and benefits sections
+- [x] List all active jobs from this church
+- [x] Add link from job detail page to church profile
+- [x] `npm run build` succeeds without errors
 
 ### US-029: Implement responsive mobile navigation
 
-- [ ] Add hamburger menu button for mobile screens
-- [ ] Create mobile navigation drawer/menu
-- [ ] Include all navigation links
-- [ ] Show user info when logged in
-- [ ] Close menu on link click or outside click
-- [ ] Animate menu open/close
-- [ ] `npm run build` succeeds without errors
+- [x] Add hamburger menu button for mobile screens
+- [x] Create mobile navigation drawer/menu
+- [x] Include all navigation links
+- [x] Show user info when logged in
+- [x] Close menu on link click or outside click
+- [x] Animate menu open/close
+- [x] `npm run build` succeeds without errors
 
 ### US-030: Add loading states and error handling
 

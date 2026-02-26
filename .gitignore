@@ -38,3 +38,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# drizzle
+/drizzle
+
+# kubernetes secrets (never commit real secrets)
+k8s/secrets.yaml

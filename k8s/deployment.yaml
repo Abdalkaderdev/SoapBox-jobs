@@ -34,12 +34,23 @@ spec:
               value: "production"
             - name: PORT
               value: "3000"
+            - name: NEXT_PUBLIC_APP_URL
+              value: "https://jobs.soapboxsuperapp.com"
+            - name: SOAPBOX_API_URL
+              value: "https://soapboxsuperapp.com"
             # Database URL from secret
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
                   name: soapbox-jobs-secrets
                   key: database-url
+                  optional: true
+            # SSO JWT Secret from secret
+            - name: SSO_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: soapbox-jobs-secrets
+                  key: sso-jwt-secret
                   optional: true
           resources:
             requests:
