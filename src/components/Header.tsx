@@ -138,9 +138,9 @@ export default function Header() {
               </>
             )}
             <Link
-              href="#"
+              href="/admin"
               className="text-gray-600 hover:text-primary-600 px-3 py-2 text-sm font-medium rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
-              aria-label="Information for churches posting jobs"
+              aria-label="Church admin dashboard - post and manage jobs"
             >
               For Churches
             </Link>
@@ -422,7 +422,7 @@ export default function Header() {
               )}
               <li>
                 <Link
-                  href="#"
+                  href="/admin"
                   onClick={closeMenu}
                   className="flex items-center px-4 py-3 text-gray-700 hover:bg-primary-50 hover:text-primary-600 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
                   aria-label="Information for churches posting jobs"
