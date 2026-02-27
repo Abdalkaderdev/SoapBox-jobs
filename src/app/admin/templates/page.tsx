@@ -19,7 +19,7 @@ export default function TemplatesPage() {
   }, [user?.churchId]);
 
   const handleDelete = (templateId: string) => {
-    if (deleteTemplate(templateId)) {
+    if (deleteTemplate(templateId, user?.churchId, user?.role)) {
       setTemplates((prev) => prev.filter((t) => t.id !== templateId));
     }
     setDeleteConfirmId(null);

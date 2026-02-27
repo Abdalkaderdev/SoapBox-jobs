@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { getJobApplications, updateApplicationStatus } from "@/lib/applications";
 import { addMessage } from "@/lib/messages";
-import { getJobById } from "@/lib/jobs";
+import { getJobById, verifyJobOwnership } from "@/lib/jobs";
 import { mockUsers } from "@/lib/mock-users";
 import {
   Application,
@@ -78,10 +78,22 @@ export default function JobApplicationsPage({ params }: ApplicationsPageProps) {
     status?: ApplicationStatus;
   } | null>(null);
   const [isBulkActionInProgress, setIsBulkActionInProgress] = useState(false);
+  const [accessDenied, setAccessDenied] = useState(false);
 
   useEffect(() => {
-    if (id) {
+    if (id && user) {
       const jobData = getJobById(id);
+
+      if (jobData) {
+        // Verify user has permission to view applications for this job
+        const verification = verifyJobOwnership(user.churchId, user.role, id);
+        if (!verification.success) {
+          setAccessDenied(true);
+          setIsLoading(false);
+          return;
+        }
+      }
+
       setJob(jobData || null);
 
       const jobApplications = getJobApplications(id);
@@ -96,7 +108,7 @@ export default function JobApplicationsPage({ params }: ApplicationsPageProps) {
 
       setIsLoading(false);
     }
-  }, [id]);
+  }, [id, user]);
 
   const getApplicantName = (userId: string): string => {
     const applicant = mockUsers.find((u) => u.id === userId);
@@ -286,6 +298,30 @@ export default function JobApplicationsPage({ params }: ApplicationsPageProps) {
               <div key={i} className="h-32 bg-gray-200 rounded"></div>
             ))}
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (accessDenied) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="text-center py-16">
+          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+            <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900">Access Denied</h2>
+          <p className="mt-2 text-gray-600">
+            You do not have permission to view applications for this job. You can only view applications for jobs that belong to your church.
+          </p>
+          <Link
+            href="/admin/jobs"
+            className="mt-6 inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+          >
+            Back to Job Listings
+          </Link>
         </div>
       </div>
     );

@@ -36,12 +36,12 @@ export default function AdminJobsPage() {
   }, [user]);
 
   const handleClosePosition = (jobId: string) => {
-    updateJobStatus(jobId, "closed");
+    updateJobStatus(jobId, "closed", user?.churchId, user?.role);
     loadJobs();
   };
 
   const handleMarkAsFilled = (jobId: string) => {
-    updateJobStatus(jobId, "filled");
+    updateJobStatus(jobId, "filled", user?.churchId, user?.role);
     loadJobs();
   };
 

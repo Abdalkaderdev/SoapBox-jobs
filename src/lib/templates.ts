@@ -18,6 +18,67 @@ export interface JobTemplate {
 
 const TEMPLATES_KEY = "soapbox_job_templates";
 
+// Church ownership verification types
+interface TemplateVerificationResult {
+  success: boolean;
+  error?: string;
+}
+
+// Allowed roles that can manage church templates
+const ALLOWED_CHURCH_ROLES = ["church_admin", "pastor", "staff_admin"] as const;
+
+/**
+ * Verifies that a user has proper role and church affiliation to manage templates for a church.
+ */
+function verifyTemplateChurchOwnership(
+  userChurchId: string | undefined,
+  userRole: string | undefined,
+  targetChurchId: string
+): TemplateVerificationResult {
+  if (!userChurchId) {
+    return {
+      success: false,
+      error: "User is not affiliated with any church",
+    };
+  }
+
+  if (!userRole || !ALLOWED_CHURCH_ROLES.includes(userRole as typeof ALLOWED_CHURCH_ROLES[number])) {
+    return {
+      success: false,
+      error: "User does not have permission to manage church templates",
+    };
+  }
+
+  if (userChurchId !== targetChurchId) {
+    return {
+      success: false,
+      error: "User is not authorized to manage templates for this church",
+    };
+  }
+
+  return { success: true };
+}
+
+/**
+ * Verifies that a user can manage a specific template.
+ */
+function verifyTemplateOwnership(
+  userChurchId: string | undefined,
+  userRole: string | undefined,
+  templateId: string
+): TemplateVerificationResult {
+  const template = getTemplateById(templateId);
+
+  if (!template) {
+    return {
+      success: false,
+      error: "Template not found",
+    };
+  }
+
+  return verifyTemplateChurchOwnership(userChurchId, userRole, template.churchId);
+}
+
 export function getTemplates(): JobTemplate[] {
   if (typeof window === "undefined") return [];
   try {
@@ -50,7 +111,20 @@ export interface SaveTemplateInput {
   };
 }
 
-export function saveTemplate(input: SaveTemplateInput): JobTemplate {
+export function saveTemplate(
+  input: SaveTemplateInput,
+  userChurchId?: string,
+  userRole?: string
+): JobTemplate | null {
+  // Verify ownership if user context is provided
+  if (userChurchId !== undefined || userRole !== undefined) {
+    const verification = verifyTemplateChurchOwnership(userChurchId, userRole, input.churchId);
+    if (!verification.success) {
+      console.error("Template save verification failed:", verification.error);
+      return null;
+    }
+  }
+
   const templates = getTemplates();
 
   const newTemplate: JobTemplate = {
@@ -69,8 +143,19 @@ export function saveTemplate(input: SaveTemplateInput): JobTemplate {
 
 export function updateTemplate(
   templateId: string,
-  updates: Partial<Omit<JobTemplate, "id" | "churchId" | "createdAt">>
+  updates: Partial<Omit<JobTemplate, "id" | "churchId" | "createdAt">>,
+  userChurchId?: string,
+  userRole?: string
 ): JobTemplate | undefined {
+  // Verify ownership if user context is provided
+  if (userChurchId !== undefined || userRole !== undefined) {
+    const verification = verifyTemplateOwnership(userChurchId, userRole, templateId);
+    if (!verification.success) {
+      console.error("Template update verification failed:", verification.error);
+      return undefined;
+    }
+  }
+
   const templates = getTemplates();
   const index = templates.findIndex((t) => t.id === templateId);
 
@@ -82,7 +167,20 @@ export function updateTemplate(
   return templates[index];
 }
 
-export function deleteTemplate(templateId: string): boolean {
+export function deleteTemplate(
+  templateId: string,
+  userChurchId?: string,
+  userRole?: string
+): boolean {
+  // Verify ownership if user context is provided
+  if (userChurchId !== undefined || userRole !== undefined) {
+    const verification = verifyTemplateOwnership(userChurchId, userRole, templateId);
+    if (!verification.success) {
+      console.error("Template deletion verification failed:", verification.error);
+      return false;
+    }
+  }
+
   const templates = getTemplates();
   const index = templates.findIndex((t) => t.id === templateId);
 

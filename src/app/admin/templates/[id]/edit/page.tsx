@@ -81,18 +81,29 @@ export default function EditTemplatePage() {
 
     setIsSaving(true);
 
-    updateTemplate(template.id, {
-      name: formData.name,
-      data: {
-        title: formData.title,
-        category: formData.category,
-        employmentType: formData.employmentType,
-        workArrangement: formData.workArrangement,
-        description: formData.description,
-        qualifications: formData.qualifications,
-        responsibilities: formData.responsibilities,
+    const result = updateTemplate(
+      template.id,
+      {
+        name: formData.name,
+        data: {
+          title: formData.title,
+          category: formData.category,
+          employmentType: formData.employmentType,
+          workArrangement: formData.workArrangement,
+          description: formData.description,
+          qualifications: formData.qualifications,
+          responsibilities: formData.responsibilities,
+        },
       },
-    });
+      user?.churchId,
+      user?.role
+    );
+
+    if (!result) {
+      setIsSaving(false);
+      // Handle permission error - could add error state here
+      return;
+    }
 
     router.push("/admin/templates");
   };

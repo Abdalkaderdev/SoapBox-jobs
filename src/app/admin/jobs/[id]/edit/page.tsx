@@ -4,7 +4,7 @@ import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { getJobById, updateJob, deleteJob } from "@/lib/jobs";
+import { getJobById, updateJob, deleteJob, verifyJobOwnership } from "@/lib/jobs";
 import { getChurchName } from "@/lib/admin";
 import {
   JOB_CATEGORIES,
@@ -55,6 +55,7 @@ export default function EditJobPage({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [accessDenied, setAccessDenied] = useState(false);
 
   const [formData, setFormData] = useState<FormData>({
     title: "",
@@ -76,6 +77,14 @@ export default function EditJobPage({
     const loadJob = () => {
       const foundJob = getJobById(id);
       if (foundJob) {
+        // Verify user has permission to edit this job
+        const verification = verifyJobOwnership(user?.churchId, user?.role, id);
+        if (!verification.success) {
+          setAccessDenied(true);
+          setIsLoading(false);
+          return;
+        }
+
         setJob(foundJob);
         setFormData({
           title: foundJob.title,
@@ -95,7 +104,7 @@ export default function EditJobPage({
     };
 
     loadJob();
-  }, [id]);
+  }, [id, user]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -163,8 +172,14 @@ export default function EditJobPage({
       responsibilities: formData.responsibilities || undefined,
     };
 
-    updateJob(id, updates);
+    const result = updateJob(id, updates, user?.churchId, user?.role);
     setIsSubmitting(false);
+
+    if (!result) {
+      setErrors({ title: "Failed to update job. You may not have permission to edit this job." });
+      return;
+    }
+
     setSuccessMessage("Job updated successfully!");
 
     // Scroll to top to show success message
@@ -172,7 +187,12 @@ export default function EditJobPage({
   };
 
   const handleDelete = () => {
-    deleteJob(id);
+    const result = deleteJob(id, user?.churchId, user?.role);
+    if (!result) {
+      setErrors({ title: "Failed to delete job. You may not have permission to delete this job." });
+      setShowDeleteConfirm(false);
+      return;
+    }
     router.push("/admin/jobs");
   };
 
@@ -206,6 +226,28 @@ export default function EditJobPage({
               <div className="h-10 bg-gray-200 rounded"></div>
             </div>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (accessDenied) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="text-center py-12">
+          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+            <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
+          <p className="text-gray-600 mb-6">You do not have permission to edit this job listing. You can only edit jobs that belong to your church.</p>
+          <Link
+            href="/admin/jobs"
+            className="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+          >
+            Back to Job Listings
+          </Link>
         </div>
       </div>
     );

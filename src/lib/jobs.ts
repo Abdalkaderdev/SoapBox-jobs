@@ -3,6 +3,72 @@ import { mockJobs } from "./mock-data";
 
 const CUSTOM_JOBS_KEY = "soapbox_custom_jobs";
 
+// Church ownership verification types
+export interface ChurchVerificationResult {
+  success: boolean;
+  error?: string;
+}
+
+// Allowed roles that can manage church jobs
+const ALLOWED_CHURCH_ROLES = ["church_admin", "pastor", "staff_admin"] as const;
+export type ChurchRole = (typeof ALLOWED_CHURCH_ROLES)[number];
+
+/**
+ * Verifies that a user has proper role and church affiliation to manage jobs for a church.
+ * This is a client-side verification - in production, this should be done server-side.
+ */
+export function verifyChurchOwnership(
+  userChurchId: string | undefined,
+  userRole: string | undefined,
+  targetChurchId: string
+): ChurchVerificationResult {
+  // Verify user has a church affiliation
+  if (!userChurchId) {
+    return {
+      success: false,
+      error: "User is not affiliated with any church",
+    };
+  }
+
+  // Verify user has an allowed role
+  if (!userRole || !ALLOWED_CHURCH_ROLES.includes(userRole as ChurchRole)) {
+    return {
+      success: false,
+      error: "User does not have permission to manage church jobs",
+    };
+  }
+
+  // Verify user's church matches the target church
+  if (userChurchId !== targetChurchId) {
+    return {
+      success: false,
+      error: "User is not authorized to manage jobs for this church",
+    };
+  }
+
+  return { success: true };
+}
+
+/**
+ * Verifies that a user can manage a specific job (owns the church the job belongs to).
+ */
+export function verifyJobOwnership(
+  userChurchId: string | undefined,
+  userRole: string | undefined,
+  jobId: string
+): ChurchVerificationResult {
+  const job = getJobById(jobId);
+
+  if (!job) {
+    return {
+      success: false,
+      error: "Job not found",
+    };
+  }
+
+  return verifyChurchOwnership(userChurchId, userRole, job.church.id);
+}
+
 export function getCustomJobs(): Job[] {
   if (typeof window === "undefined") return [];
   try {
@@ -58,7 +124,20 @@ export interface CreateJobInput {
   status?: JobStatus;
 }
 
-export function createJob(input: CreateJobInput): Job {
+export function createJob(
+  input: CreateJobInput,
+  userChurchId?: string,
+  userRole?: string
+): Job | null {
+  // Verify ownership if user context is provided
+  if (userChurchId !== undefined || userRole !== undefined) {
+    const verification = verifyChurchOwnership(userChurchId, userRole, input.churchId);
+    if (!verification.success) {
+      console.error("Job creation verification failed:", verification.error);
+      return null;
+    }
+  }
+
   const jobs = getCustomJobs();
 
   const newJob: Job = {
@@ -93,18 +172,51 @@ export function createJob(input: CreateJobInput): Job {
   return newJob;
 }
 
-export function updateJob(jobId: string, updates: Partial<Job>): Job | undefined {
+export function updateJob(
+  jobId: string,
+  updates: Partial<Job>,
+  userChurchId?: string,
+  userRole?: string
+): Job | undefined {
+  // Verify ownership if user context is provided
+  if (userChurchId !== undefined || userRole !== undefined) {
+    const verification = verifyJobOwnership(userChurchId, userRole, jobId);
+    if (!verification.success) {
+      console.error("Job update verification failed:", verification.error);
+      return undefined;
+    }
+  }
+
   const jobs = getCustomJobs();
   const index = jobs.findIndex((j) => j.id === jobId);
 
   if (index === -1) return undefined;
+
+  // Prevent changing the church association
+  if (updates.church && updates.church.id !== jobs[index].church.id) {
+    console.error("Cannot change job church association");
+    return undefined;
+  }
 
   jobs[index] = { ...jobs[index], ...updates };
   saveCustomJobs(jobs);
   return jobs[index];
 }
 
-export function deleteJob(jobId: string): boolean {
+export function deleteJob(
+  jobId: string,
+  userChurchId?: string,
+  userRole?: string
+): boolean {
+  // Verify ownership if user context is provided
+  if (userChurchId !== undefined || userRole !== undefined) {
+    const verification = verifyJobOwnership(userChurchId, userRole, jobId);
+    if (!verification.success) {
+      console.error("Job deletion verification failed:", verification.error);
+      return false;
+    }
+  }
+
   const jobs = getCustomJobs();
   const index = jobs.findIndex((j) => j.id === jobId);
 
@@ -115,6 +227,11 @@ export function deleteJob(jobId: string): boolean {
   return true;
 }
 
-export function updateJobStatus(jobId: string, status: JobStatus): Job | undefined {
-  return updateJob(jobId, { status });
+export function updateJobStatus(
+  jobId: string,
+  status: JobStatus,
+  userChurchId?: string,
+  userRole?: string
+): Job | undefined {
+  return updateJob(jobId, { status }, userChurchId, userRole);
 }
